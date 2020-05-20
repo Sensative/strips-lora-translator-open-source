@@ -3,6 +3,13 @@ const raw_translate = require ('./raw-translate');
 const https = require('https');
 const fs = require('fs');
 const url = require('url');
+var apikeys = [];
+try {
+    apikeys = fs.readdirSync('./apikeys');
+} catch {};
+
+apikeys.length > 0 || console.log("*** No API keys folder present or folder empty. Proceeding without API access control.");
+
 
 const hex2data = hex => {
     if (hex.length %2 !== 0)
@@ -11,15 +18,15 @@ const hex2data = hex => {
     const bytes = [];
     for (bytes; c < hex.length; c += 2) {
         let b = parseInt(hex.substr(c, 2), 16);
-        if (isNaN(b)) // Bad data input
-            return null;
+        if (isNaN(b)) 
+            return null; // Bad data input
         bytes.push(b);
     }
     return bytes;
 };
 
-console.log("Attempting to read HTTPS key.pem and certificate.pem from ./cert/ folder, obviously not included in this repo.");
-console.log("Obtain these files from your ISP, a commercial certificate, or by generating your own certificate.");
+console.log("*** Attempting to read HTTPS key.pem and certificate.pem from ./cert/ folder, not included in this repo.");
+console.log("*** Obtain these files from your ISP, a commercial certificate, or by generating your own certificate.");
 const options = {
     key: fs.readFileSync('cert/key.pem'),
     cert: fs.readFileSync('cert/cert.pem')
@@ -70,7 +77,19 @@ https.createServer(options, function (req, res) {
         return;
     }
 
+    if (apikeys.length > 0) {
+        const apikey = query.k;
+        console.log ("key: " + apikey);
+        if (apikeys.findIndex(k=>k==apikey) == -1) {
+            console.log("bad/missing key");
+            res.writeHead(400);
+            res.end("API key does not match a registerred key");
+            return;
+        }
+    }
+
     const object = raw_translate(bytes, loraPort);
+    console.log(object);
     res.writeHead(200);
     res.end(JSON.stringify(object));
 }).listen(process.env.PORT);
