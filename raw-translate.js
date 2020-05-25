@@ -77,29 +77,37 @@ const rawTranslate = (bytes, port) => {
         target.foilAlarm = {};
         target.foilAlarm.value = !!bytes[pos++]; // should never trigger anymore
         break;
-      case 16: // UserSwitch1Alarm, 1 byte digital
+    case 16: // UserSwitch1Alarm, 1 byte digital
         target.userSwitch1Alarm = {};
         target.userSwitch1Alarm.value = !!bytes[pos++];
         break;
-      case 17: // DoorCountReport, 2 byte analog
+    case 17: // DoorCountReport, 2 byte analog
         target.doorCount = {};
         target.doorCount.value = ((bytes[pos++] << 8) | bytes[pos++]);
         break;
-      case 18: // PresenceReport, 1 byte digital
+    case 18: // PresenceReport, 1 byte digital
         target.presence = {};
         target.presence.value = !!bytes[pos++];
         break;
-      case 19: // IRProximityReport
+    case 19: // IRProximityReport
         target.IRproximity = {};
         target.IRproximity.value = ((bytes[pos++] << 8) | bytes[pos++]);
         break;
-      case 20: // EXPERIMENTAL: IRCloseProximityReport
+    case 20: // IRCloseProximityReport, low power
         target.IRcloseproximity = {};
         target.IRcloseproximity.value = ((bytes[pos++] << 8) | bytes[pos++]);
         break;
-      case 21: // EXPERIMENTAL: CloseProximityAlarm, for now treat as a door alarm(!)
-        target.doorAlarm = {};
-        target.doorAlarm.value = !bytes[pos++]; // boolean true = !alarm
+    case 21: // CloseProximityAlarm, something very close to presence sensor
+        target.closeProximityAlarm = {};
+        target.closeProximityAlarm.value = !!bytes[pos++];
+        break;
+    case 22: // DisinfectAlarm
+        target.disinfectAlarm = {};
+        target.disinfectAlarm.value = bytes[pos++];
+        if (target.disinfectAlarm.value == 0) target.disinfectAlarm.state='dirty';
+        if (target.disinfectAlarm.value == 1) target.disinfectAlarm.state='occupied';
+        if (target.disinfectAlarm.value == 2) target.disinfectAlarm.state='cleaning';
+        if (target.disinfectAlarm.value == 3) target.disinfectAlarm.state='clean';
         break;
     case 80:
         target.humidity = {};
