@@ -57,9 +57,9 @@ const rawTranslate = (bytes, port) => {
         target.doorAlarm = {};
         target.doorAlarm.value = !!bytes[pos++]; // boolean true = alarm
         break;
-      case 11: // TamperSwitch 1bytes binary
-        target.tamperSwitch = {};
-        target.tamperSwitch.value = !!bytes[pos++]; // should never trigger anymore
+      case 11: // TamperReport 1bytes binary
+        target.tamperReport = {};
+        target.tamperReport.value = !!bytes[pos++]; // should never trigger anymore
         break;
       case 12: // TamperAlarm 1bytes binary
         target.tamperAlarm = {};
