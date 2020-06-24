@@ -6,7 +6,9 @@ const rawTranslate = (bytes, port) => {
   // Decode an uplink message from a buffer
   // (array) of bytes to an object of fields.
 
-  const decodeFrame = (type, target) => {
+  const decodeFrame = (type, target, seqNr) => {
+    if (!isNaN(seqNr))
+        target.seqNr = seqNr;
     switch(type & 0x7f) {
       case 0:
         target.emptyFrame = {};
@@ -157,8 +159,10 @@ const rawTranslate = (bytes, port) => {
   var decoded = {};
   var pos = 0;
   var type;
+  var now = new Date();
   switch(port) {
-    case 1:
+    case 1: // No timestamp, default for legacy versions
+    case 3: // Timestamp added, option for modern versions
       if(bytes.length < 2) {
         decoded.error = 'Wrong length of RX package';
         break;
@@ -167,16 +171,29 @@ const rawTranslate = (bytes, port) => {
       decoded.prevHistSeqNr = decoded.historySeqNr;
       while(pos < bytes.length) {
         type = bytes[pos++];
+        if (3 == port) {
+            // There is a time offset in seconds
+            var ts = bytes[pos++];
+            if (0 == (ts | 0x80)) {
+                // ts is a time offset in seconds, msb==0 indicates single byte.
+            } else {
+                ts &= 0x7f; // First bit set indicated this was a 3 byte timestamp
+                ts <<= 8;
+                ts |= bytes[pos++];
+                ts <<= 8;
+                ts |= bytes[pos++];
+            }
+            decoded.timeStamp = new Date(now.getTime() - ts*1000).toUTCString();
+        }
+        decodeFrame(type, decoded, type & 0x80 ? decoded.prevHistSeqNr : NaN);
         if(type & 0x80)
             decoded.prevHistSeqNr--;
-        decodeFrame(type, decoded);
       }
       break;
     case 2:
-      var now = new Date();
       decoded.history = {};
       if(bytes.length < 2) {
-        decoded.history.error = 'Wrong length of RX package';
+        decoded.error = 'Wrong length of RX package';
         break;
       }
       var seqNr = (bytes[pos++] << 8) | bytes[pos++];
@@ -186,7 +203,7 @@ const rawTranslate = (bytes, port) => {
         const secondsAgo = (bytes[pos++] << 24) | (bytes[pos++] << 16) | (bytes[pos++] << 8) | bytes[pos++];
         decoded.history[seqNr].timeStamp = new Date(now.getTime() - secondsAgo*1000).toUTCString();
         type = bytes[pos++];
-        decodeFrame(type, decoded.history[seqNr]);
+        decodeFrame(type, decoded.history[seqNr], seqNr);
         seqNr++;
       }
   }
