@@ -172,7 +172,8 @@ const rawTranslate = (bytes, port) => {
         decodeFrame(type, decoded);
       }
       break;
-    case 2:
+    case 2: // History
+    case 3: // Resend with timestamp
       var now = new Date();
       decoded.history = {};
       if(bytes.length < 2) {
