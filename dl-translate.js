@@ -22,11 +22,17 @@ function d2h(d, bytes) {
     return hex;
 }
 
+const encodeU32hex = (value) => {
+    console.log("value: " + value);
+    const n = parseInt(value.substring(2), 16);
+    return d2h(n, 4);
+}
+
 const encodeU32 = (value) => {
     return d2h(value, 4);
 }
 
-// Uplink data decoders, not yet completed - in place we replace the raw-translate.js
+// Uplink data decoders, not yet completed - in case we replace the raw-translate.js
 const ANALOG1 = {
     name    : '1 byte',
     getsize : (bytes, pos) => 1,
@@ -122,7 +128,6 @@ const STRIPS_REPORTS = {
 
 const decodeReports = (n) => {
     let result = '';
-    result['reportbits'] = decodeU32hex(n);
     for (var report in STRIPS_REPORTS) {
         if (n & (1 << STRIPS_REPORTS[report].reportbit)) {
             if (result != '')
@@ -175,8 +180,8 @@ const encodeConfig = (str) => {
 
 // Settings metadata
 const STRIPS_SETTINGS = {
-    NONE                              : { id: 0x00, unit: 'none',           decode: decodeU32hex,  encode: encodeU32, name:'None'},
-    VERSION                           : { id: 0x01, unit: 'version',        decode: decodeU32hex,  encode: encodeU32,  name:'Version'  },
+    NONE                              : { id: 0x00, unit: 'none',           decode: decodeU32hex,  encode: encodeU32hex, name:'None'},
+    VERSION                           : { id: 0x01, unit: 'version',        decode: decodeU32hex,  encode: encodeU32hex,  name:'Version'  },
     BASE_POLL_INTERVAL                : { id: 0x02, unit: 'ms',             decode: decodeU32dec,  encode: encodeU32,  name:'Base poll interval'  },
     REPORTS_ENABLED                   : { id: 0x03, unit: 'reports',        decode: decodeReports, encode: encodeReports, name:'Reports enabled'},
     TEMP_POLL_INTERVAL                : { id: 0x04, unit: 's',              decode: decodeU32dec,  encode: encodeU32,  name:'Temp poll interval'  },
@@ -444,5 +449,3 @@ function test() {
 }
 
 test();
-
-
