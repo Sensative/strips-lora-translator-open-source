@@ -22,6 +22,10 @@ function d2h(d, bytes) {
     return hex;
 }
 
+const encodeU32 = (value) => {
+    return d2h(value, 4);
+}
+
 // Uplink data decoders, not yet completed - in place we replace the raw-translate.js
 const ANALOG1 = {
     name    : '1 byte',
@@ -117,78 +121,111 @@ const STRIPS_REPORTS = {
 
 
 const decodeReports = (n) => {
-    let result = new Object();
+    let result = '';
     result['reportbits'] = decodeU32hex(n);
     for (var report in STRIPS_REPORTS) {
-        if (n & (1 << STRIPS_REPORTS[report].reportbit))
-            result[report] = STRIPS_REPORTS[report];
+        if (n & (1 << STRIPS_REPORTS[report].reportbit)) {
+            if (result != '')
+                result += '|';
+            result += report;
+        }
     }
     return result;
 }
 
+const encodeReports = (str) => {
+    const list = str.split('|');
+    let res = 0;
+    list.map((item) => {
+        if (item.length > 0) {
+            if (!STRIPS_REPORTS.hasOwnProperty(item))
+                throw {message:'Invalid report id: ' + item};
+            res |= (1<<STRIPS_REPORTS[item].reportbit)
+        }
+    });
+    return d2h(res, 4);
+}
+
+const SENSOR_CONFIG_BITS = {
+    INVERT_DOOR: (1<<0),
+    HIGH_POWER_PROXIMITY: (1<<1),
+}
+
 const decodeConfig = (n) => {
     let r = '';
-    if ((n & 1) != 0)
-        r+= 'Invert door|';
-    if ((n & 2) != 0)
-        r+= 'High power proximity|';
+    for (let bitname in SENSOR_CONFIG_BITS)
+        if (n & SENSOR_CONFIG_BITS[bitname]) {
+            if (r!='') r+='|';
+            r+=bitname;
+        }
     return r;
 }
 
+const encodeConfig = (str) => {
+    const list = str.split('|');
+    let res = 0;
+    list.map((item) => {
+        for (let bitname in SENSOR_CONFIG_BITS) {
+            if (item == bitname)
+                res |= SENSOR_CONFIG_BITS[bitname];
+        }
+    });
+    return d2h(res, 4);
+}
 
 // Settings metadata
 const STRIPS_SETTINGS = {
-    NONE                              : { id: 0x00, unit: 'none',           decode: decodeU32hex,  name:'None'  },
-    VERSION                           : { id: 0x01, unit: 'version',        decode: decodeU32hex,  name:'Version'  },
-    BASE_POLL_INTERVAL                : { id: 0x02, unit: 'ms',             decode: decodeU32dec,  name:'Base poll interval'  },
-    REPORTS_ENABLED                   : { id: 0x03, unit: 'reports',        decode: decodeReports, name:'Reports enabled'  },
-    TEMP_POLL_INTERVAL                : { id: 0x04, unit: 's',              decode: decodeU32dec,  name:'Temp poll interval'  },
-    TEMP_SEND_IMMEDIATELY_TRESHOLD    : { id: 0x05, unit: 'mC',             decode: decodeU32dec,  name:'Temp send immediately treshold'  },
-    TEMP_SEND_THROTTLED_TRESHOLD      : { id: 0x06, unit: 'mC',             decode: decodeU32dec,  name:'Temp send throttled treshold'  },
-    TEMP_SEND_THROTTLED_TIME          : { id: 0x07, unit: 's',              decode: decodeU32dec,  name:'Temp send throttled time'  },
-    TEMP_LOW_ALARM                    : { id: 0x08, unit: 'mC',             decode: decodeU32dec,  name:'Temp low alarm'  },
-    TEMP_HIGH_ALARM                   : { id: 0x09, unit: 'mC',             decode: decodeU32dec,  name:'Temp high alarm'  },
-    TEMP_ALARM_HYSTERESIS             : { id: 0x0A, unit: 'mC',             decode: decodeU32dec,  name:'Temp alarm hysteresis'  },
-    AVGTEMP_AVERAGE_TIME              : { id: 0x0B, unit: 's',              decode: decodeU32dec,  name:'Average temp average time'  },
-    AVGTEMP_MIN_TEMP                  : { id: 0x0C, unit: 'mC',             decode: decodeU32dec,  name:'Average temp min temp'  },
-    AVGTEMP_SEND_IMMEDIATELY_TRESHOLD : { id: 0x0D, unit: 'mC',             decode: decodeU32dec,  name:'Averate temp send immediately treshold'  },
-    AVGTEMP_LOW_ALARM                 : { id: 0x0E, unit: 'mC',             decode: decodeU32dec,  name:'Average temp low alarm'  },
-    AVGTEMP_HIGH_ALARM                : { id: 0x0F, unit: 'mC',             decode: decodeU32dec,  name:'Average temp high alarm'  },
-    AVGTEMP_ALARM_HYSTERESIS          : { id: 0x10, unit: 'mC',             decode: decodeU32dec,  name:'Average temp hysteresis'  },
-    HUMIDITY_POLL_INTERVAL            : { id: 0x11, unit: 's',              decode: decodeU32dec,  name:'Humidity poll interval'  },
-    HUMIDITY_TRESHOLD                 : { id: 0x12, unit: '%',              decode: decodeU32dec,  name:'Humidity treshold'  },
-    LUX_POLL_INTERVAL                 : { id: 0x13, unit: 's',              decode: decodeU32dec,  name:'Lux poll interval'  },
-    LUX_HIGH_LEVEL_1                  : { id: 0x14, unit: 'Lux',            decode: decodeU32dec,  name:'Lux high level 1'  },
-    LUX_LOW_LEVEL_1                   : { id: 0x15, unit: 'Lux',            decode: decodeU32dec,  name:'Lux low level 1'  },
-    LUX_HIGH_LEVEL_2                  : { id: 0x16, unit: 'Lux',            decode: decodeU32dec,  name:'Lux high level 2'  },
-    LUX_LOW_LEVEL_2                   : { id: 0x17, unit: 'Lux',            decode: decodeU32dec,  name:'Lux low level 2'  },
-    FLOOD_POLL_INTERVAL               : { id: 0x18, unit: 's',              decode: decodeU32dec,  name:'Flood poll interval'  },
-    FLOOD_CAPACITANCE_MIN             : { id: 0x19, unit: 'capacitance',    decode: decodeU32dec,  name:'Flood capacitance min'  },
-    FLOOD_CAPACITANCE_MAX             : { id: 0x1A, unit: 'capacitance',    decode: decodeU32dec,  name:'Flood capacitance max'  },
-    FLOOD_REPORT_INTERVAL             : { id: 0x1B, unit: 's',              decode: decodeU32dec,  name:'Flood report interval'  },
-    FLOOD_ALARM_TRESHOLD              : { id: 0x1C, unit: '%',              decode: decodeU32dec,  name:'Flood alarm treshold'  },
-    FLOOD_ALARM_HYSTERESIS            : { id: 0x1D, unit: '%',              decode: decodeU32dec,  name:'Flood alarm hysteresis'  },
-    SETTINGS_FOIL_TRESHOLD            : { id: 0x1E, unit: 'capacitance',    decode: decodeU32dec,  name:'Foil treshold'  },
-    CAPACITANCE_FLOOD_REPORT_INTERVAL : { id: 0x1F, unit: 's',              decode: decodeU32dec,  name:'Cap flood report interval'  },
-    CAPACITANCE_PAD_REPORT_INTERVAL   : { id: 0x20, unit: 's',              decode: decodeU32dec,  name:'Cap pad report interval'  },
-    CAPACITANCE_END_REPORT_INTERVAL   : { id: 0x21, unit: 's',              decode: decodeU32dec,  name:'Cap end report interval'  },
-    SENSORS_COMBINED_1                : { id: 0x22, unit: 'reports',        decode: decodeReports, name:'Combined sensors 1'  },
-    SENSORS_COMBINED_2                : { id: 0x23, unit: 'reports',        decode: decodeReports, name:'Combined sensors 2'  },
-    SENSORS_COMBINED_3                : { id: 0x24, unit: 'reports',        decode: decodeReports, name:'Combined sensors 3'  },
-    HISTORY_REPORTS                   : { id: 0x25, unit: 'reports',        decode: decodeReports, name:'History reports'  },
-    DEMO_TRYJOIN_INTERVAL             : { id: 0x26, unit: 'min',            decode: decodeU32dec,  name:'Try join interval'  },
-    LUX_PLASTIC_COMP                  : { id: 0x27, unit: '%',              decode: decodeU32dec,  name:'Lux plastic comp'  },
-    LORA_DATA_RATE                    : { id: 0x28, unit: 'datarate',       decode: decodeU32dec,  name:'Lora data rate'  },
-    LED_LEVEL                         : { id: 0x29, unit: 'ledlevel',       decode: decodeU32dec,  name:'Led level'  },
-    LINK_CHECK_INTERVAL               : { id: 0x2A, unit: 'unknown',        decode: decodeU32dec,  name:'Link check interval'  },
-    RESEND_RESET_TIME                 : { id: 0x2B, unit: 'unknown',        decode: decodeU32dec,  name:'Resend reset time'  },
-    LUX_LOW_CUTOFF                    : { id: 0x2C, unit: 'lux',            decode: decodeU32dec,  name:'Lux low cutoff'  },
-    DOOR_COUNT_REPORT_INTERVAL        : { id: 0x2D, unit: 's',              decode: decodeU32dec,  name:'Door count interval'  },
-    IR_PROXIMITY_REPORT_INTERVAL      : { id: 0x2E, unit: 's',              decode: decodeU32dec,  name:'IR Proximity report interval'  },
-    PRESENCE_POLL_INTERVAL            : { id: 0x2F, unit: 's',              decode: decodeU32dec,  name:'Presence poll interval'  },
-    PRESENCE_TRESHOLD                 : { id: 0x30, unit: 'reflection',     decode: decodeU32dec,  name:'Presence treshold'  },
-    PRESENCE_TIMEOUT                  : { id: 0x31, unit: 's',              decode: decodeU32dec,  name:'Presence timeout'  },
-    SENSOR_CONFIGURATION              : { id: 0x32, unit: 'config',         decode: decodeConfig,  name:'Sensor configuration'  },
+    NONE                              : { id: 0x00, unit: 'none',           decode: decodeU32hex,  encode: encodeU32, name:'None'},
+    VERSION                           : { id: 0x01, unit: 'version',        decode: decodeU32hex,  encode: encodeU32,  name:'Version'  },
+    BASE_POLL_INTERVAL                : { id: 0x02, unit: 'ms',             decode: decodeU32dec,  encode: encodeU32,  name:'Base poll interval'  },
+    REPORTS_ENABLED                   : { id: 0x03, unit: 'reports',        decode: decodeReports, encode: encodeReports, name:'Reports enabled'},
+    TEMP_POLL_INTERVAL                : { id: 0x04, unit: 's',              decode: decodeU32dec,  encode: encodeU32,  name:'Temp poll interval'  },
+    TEMP_SEND_IMMEDIATELY_TRESHOLD    : { id: 0x05, unit: 'mC',             decode: decodeU32dec,  encode: encodeU32,  name:'Temp send immediately treshold'  },
+    TEMP_SEND_THROTTLED_TRESHOLD      : { id: 0x06, unit: 'mC',             decode: decodeU32dec,  encode: encodeU32,  name:'Temp send throttled treshold'  },
+    TEMP_SEND_THROTTLED_TIME          : { id: 0x07, unit: 's',              decode: decodeU32dec,  encode: encodeU32,  name:'Temp send throttled time'  },
+    TEMP_LOW_ALARM                    : { id: 0x08, unit: 'mC',             decode: decodeU32dec,  encode: encodeU32,  name:'Temp low alarm'  },
+    TEMP_HIGH_ALARM                   : { id: 0x09, unit: 'mC',             decode: decodeU32dec,  encode: encodeU32,  name:'Temp high alarm'  },
+    TEMP_ALARM_HYSTERESIS             : { id: 0x0A, unit: 'mC',             decode: decodeU32dec,  encode: encodeU32,  name:'Temp alarm hysteresis' },
+    AVGTEMP_AVERAGE_TIME              : { id: 0x0B, unit: 's',              decode: decodeU32dec,  encode: encodeU32,  name:'Average temp average time' },
+    AVGTEMP_MIN_TEMP                  : { id: 0x0C, unit: 'mC',             decode: decodeU32dec,  encode: encodeU32,  name:'Average temp min temp'  },
+    AVGTEMP_SEND_IMMEDIATELY_TRESHOLD : { id: 0x0D, unit: 'mC',             decode: decodeU32dec,  encode: encodeU32,  name:'Averate temp send immediately treshold'  },
+    AVGTEMP_LOW_ALARM                 : { id: 0x0E, unit: 'mC',             decode: decodeU32dec,  encode: encodeU32,  name:'Average temp low alarm'  },
+    AVGTEMP_HIGH_ALARM                : { id: 0x0F, unit: 'mC',             decode: decodeU32dec,  encode: encodeU32,  name:'Average temp high alarm'  },
+    AVGTEMP_ALARM_HYSTERESIS          : { id: 0x10, unit: 'mC',             decode: decodeU32dec,  encode: encodeU32,  name:'Average temp hysteresis'  },
+    HUMIDITY_POLL_INTERVAL            : { id: 0x11, unit: 's',              decode: decodeU32dec,  encode: encodeU32,  name:'Humidity poll interval'  },
+    HUMIDITY_TRESHOLD                 : { id: 0x12, unit: '%',              decode: decodeU32dec,  encode: encodeU32,  name:'Humidity treshold'  },
+    LUX_POLL_INTERVAL                 : { id: 0x13, unit: 's',              decode: decodeU32dec,  encode: encodeU32,  name:'Lux poll interval'  },
+    LUX_HIGH_LEVEL_1                  : { id: 0x14, unit: 'Lux',            decode: decodeU32dec,  encode: encodeU32,  name:'Lux high level 1'  },
+    LUX_LOW_LEVEL_1                   : { id: 0x15, unit: 'Lux',            decode: decodeU32dec,  encode: encodeU32,  name:'Lux low level 1'  },
+    LUX_HIGH_LEVEL_2                  : { id: 0x16, unit: 'Lux',            decode: decodeU32dec,  encode: encodeU32,  name:'Lux high level 2'  },
+    LUX_LOW_LEVEL_2                   : { id: 0x17, unit: 'Lux',            decode: decodeU32dec,  encode: encodeU32,  name:'Lux low level 2'  },
+    FLOOD_POLL_INTERVAL               : { id: 0x18, unit: 's',              decode: decodeU32dec,  encode: encodeU32,  name:'Flood poll interval'  },
+    FLOOD_CAPACITANCE_MIN             : { id: 0x19, unit: 'capacitance',    decode: decodeU32dec,  encode: encodeU32,  name:'Flood capacitance min'  },
+    FLOOD_CAPACITANCE_MAX             : { id: 0x1A, unit: 'capacitance',    decode: decodeU32dec,  encode: encodeU32,  name:'Flood capacitance max'  },
+    FLOOD_REPORT_INTERVAL             : { id: 0x1B, unit: 's',              decode: decodeU32dec,  encode: encodeU32,  name:'Flood report interval'  },
+    FLOOD_ALARM_TRESHOLD              : { id: 0x1C, unit: '%',              decode: decodeU32dec,  encode: encodeU32,  name:'Flood alarm treshold'  },
+    FLOOD_ALARM_HYSTERESIS            : { id: 0x1D, unit: '%',              decode: decodeU32dec,  encode: encodeU32,  name:'Flood alarm hysteresis'  },
+    SETTINGS_FOIL_TRESHOLD            : { id: 0x1E, unit: 'capacitance',    decode: decodeU32dec,  encode: encodeU32,  name:'Foil treshold'  },
+    CAPACITANCE_FLOOD_REPORT_INTERVAL : { id: 0x1F, unit: 's',              decode: decodeU32dec,  encode: encodeU32,  name:'Cap flood report interval'  },
+    CAPACITANCE_PAD_REPORT_INTERVAL   : { id: 0x20, unit: 's',              decode: decodeU32dec,  encode: encodeU32,  name:'Cap pad report interval'  },
+    CAPACITANCE_END_REPORT_INTERVAL   : { id: 0x21, unit: 's',              decode: decodeU32dec,  encode: encodeU32,  name:'Cap end report interval'  },
+    SENSORS_COMBINED_1                : { id: 0x22, unit: 'reports',        decode: decodeReports, encode: encodeReports, name:'Combined sensors 1'  },
+    SENSORS_COMBINED_2                : { id: 0x23, unit: 'reports',        decode: decodeReports, encode: encodeReports, name:'Combined sensors 2' },
+    SENSORS_COMBINED_3                : { id: 0x24, unit: 'reports',        decode: decodeReports, encode: encodeReports, name:'Combined sensors 3' },
+    HISTORY_REPORTS                   : { id: 0x25, unit: 'reports',        decode: decodeReports, encode: encodeReports, name:'History reports' },
+    DEMO_TRYJOIN_INTERVAL             : { id: 0x26, unit: 'min',            decode: decodeU32dec,  encode: encodeU32, name:'Try join interval'  },
+    LUX_PLASTIC_COMP                  : { id: 0x27, unit: '%',              decode: decodeU32dec,  encode: encodeU32, name:'Lux plastic comp'  },
+    LORA_DATA_RATE                    : { id: 0x28, unit: 'datarate',       decode: decodeU32dec,  encode: encodeU32, name:'Lora data rate'  },
+    LED_LEVEL                         : { id: 0x29, unit: 'ledlevel',       decode: decodeU32dec,  encode: encodeU32, name:'Led level'  },
+    LINK_CHECK_INTERVAL               : { id: 0x2A, unit: 'unknown',        decode: decodeU32dec,  encode: encodeU32, name:'Link check interval'  },
+    RESEND_RESET_TIME                 : { id: 0x2B, unit: 'unknown',        decode: decodeU32dec,  encode: encodeU32, name:'Resend reset time'  },
+    LUX_LOW_CUTOFF                    : { id: 0x2C, unit: 'lux',            decode: decodeU32dec,  encode: encodeU32, name:'Lux low cutoff'  },
+    DOOR_COUNT_REPORT_INTERVAL        : { id: 0x2D, unit: 's',              decode: decodeU32dec,  encode: encodeU32, name:'Door count interval'  },
+    IR_PROXIMITY_REPORT_INTERVAL      : { id: 0x2E, unit: 's',              decode: decodeU32dec,  encode: encodeU32,name:'IR Proximity report interval'  },
+    PRESENCE_POLL_INTERVAL            : { id: 0x2F, unit: 's',              decode: decodeU32dec,  encode: encodeU32,name:'Presence poll interval'  },
+    PRESENCE_TRESHOLD                 : { id: 0x30, unit: 'reflection',     decode: decodeU32dec,  encode: encodeU32,name:'Presence treshold'  },
+    PRESENCE_TIMEOUT                  : { id: 0x31, unit: 's',              decode: decodeU32dec,  encode: encodeU32,name:'Presence timeout'  },
+    SENSOR_CONFIGURATION              : { id: 0x32, unit: 'config',         decode: decodeConfig,  encode: encodeU32,name:'Sensor configuration', encode: encodeConfig},
 }
 
 const STRIPS_PROFILES = {
@@ -234,11 +271,9 @@ function decodeSetSetting(bytes, pos) {
 function encodeSetSetting(obj) {
     var res = '';
     for (var field in obj)
-        for (var setting in STRIPS_SETTINGS)
-            if (field == setting) {
-                // @TODO: Per-setting decoder same as encoder
-                res += d2h(STRIPS_SETTINGS[setting].id,1) + d2h(obj[setting].value);
-            }
+        if (STRIPS_SETTINGS.hasOwnProperty(field))
+            res += d2h(STRIPS_SETTINGS[field].id,1) + STRIPS_SETTINGS[field].encode(obj[field].value);
+    return res;
 }
 
 
@@ -323,13 +358,14 @@ function encodeCmdUnjoin(obj) {
 }
 
 function decodeEndComp(bytes, pos) {
-    if (2 != bytes.length)
+    if (1 != bytes.length)
         throw {message: 'End compliance test: Bad package size'}
-    return {kind: 'End compliance test'};
+    return {};
 }
 
+// No data for this command
 function encodeEndComp(obj) {
-    throw {message: "End compliance encoding not implemented"};
+    return '';
 }
 
 const STRIPS_PORTCOMMANDS = {
@@ -343,7 +379,7 @@ const STRIPS_PORTCOMMANDS = {
 
 // Either return a structure representing the downlink, or throw an error with message corresponding to the problem
 const decodeLoraStripsDownlink = (port, bytes) => {
-    if (bytes == null || bytes.length < 2)
+    if (bytes == null || bytes.length < 1)
         throw { message: 'Not enough data'};
     const cmd = bytes[0];
     for (var id in STRIPS_PORTCOMMANDS) {
@@ -384,18 +420,24 @@ function test() {
     rl.question('Enter port (decimal): ', (port) => {
         port = Number(port);
         rl.question('Enter downlink (hex format): ', (hex) => { 
-            try {
+//            try {
                 let data = Buffer.from(hex, "hex");
                 let decoded = decodeLoraStripsDownlink(port, data);
-                console.log(JSON.stringify(decoded));
+                console.log("Decoded:       " + JSON.stringify(decoded));
                 let encoded = encodeLoraStripsDownlink(decoded);
                 console.log("Encoded again: " + JSON.stringify(encoded));
-                if (encoded.data != hex)
+                if (encoded.data.toUpperCase() != hex.toUpperCase())
                     console.log("WARN: Encode result is different from decode result");
                 if (encoded.port != port)
                     console.log("WARN: Encoded port "+encoded.port+" differs from port.");
 
-            } catch (err) { console.log(err.message); }
+                // Check if there are any exceptions when re-encoding the same data
+                let decoded2 = decodeLoraStripsDownlink(encoded.port, Buffer.from(encoded.data, "hex"));
+                console.log("Decoded again: " + JSON.stringify(decoded2));
+                let encoded2 = encodeLoraStripsDownlink(decoded2);
+                if (encoded2.data.toUpperCase() != encoded.data.toUpperCase())
+                    console.log("WARN: Re-decoded and encoded data differs");
+//            } catch (err) { console.log(err.message); }
             test(); // Bad tail recursion
         })
     })
