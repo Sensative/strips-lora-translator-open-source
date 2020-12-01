@@ -1,4 +1,7 @@
-
+// Copyright (C) 2020, www.sensative.com
+//
+//  Downlink decoding
+//
 
 // Raw data decoder functions
 const decodeU32dec = (n) => {
@@ -50,48 +53,48 @@ const TEMPDOOR={
 
 // Logical sensors connected to each report, may be used to define products in terms of what sensors are available
 const SENSOR = {
-    Btn:  1<<1,
-    Bat:  1<<2,
-    Tmp:  1<<3,
-    Hum:  1<<4,
-    Lux:  1<<5,
-    Dor:  1<<6,
-    Tpr:  1<<7,
-    Cap:  1<<8,
-    Prx:  1<<9,
+    BUTTON:    1<<1,
+    BATTERY:   1<<2,
+    TEMP:      1<<3,
+    HUMID:     1<<4,
+    LUX:       1<<5,
+    DOOR:      1<<6,
+    TAMPER:    1<<7,
+    CAP:       1<<8,
+    PROX:      1<<9,
 }
 
 // All report types including what is required for decode and what sensors are required for each
 const STRIPS_REPORTS = {
-    UserButton1Alarm:       { reportbit:  0, sensors: SENSOR.Btn,            coding: GIT_IDD, channel: 110 },
-    BatteryReport:          { reportbit:  1, sensors: SENSOR.Bat,            coding: ANALOG1, channel: 1 },
-    TempReport:             { reportbit:  2, sensors: SENSOR.Tmp,            coding: ANALOG2, channel: 2 },
-    TempAlarm:              { reportbit:  3, sensors: SENSOR.Tmp,            coding: ANALOG1, channel: 3 },
-    AverageTempReport:      { reportbit:  4, sensors: SENSOR.Tmp,            coding: ANALOG2, channel: 4 },
-    AverageTempAlarm:       { reportbit:  5, sensors: SENSOR.Tmp,            coding: ANALOG1, channel: 5 },
-    HumidityReport:         { reportbit:  6, sensors: SENSOR.Hum,            coding: ANALOG1, channel: 6 },
-    LuxReport:              { reportbit:  7, sensors: SENSOR.Lux,            coding: ANALOG2, channel: 7 },
-    LuxReport2:             { reportbit:  8, sensors: SENSOR.Lux,            coding: ANALOG2, channel: 8 },
-    DoorReport:             { reportbit:  9, sensors: SENSOR.Dor,            coding: DIGITAL, channel: 9 },
-    DoorAlarm:              { reportbit: 10, sensors: SENSOR.Dor,            coding: DIGITAL, channel: 10 },
-    TamperReport:           { reportbit: 11, sensors: SENSOR.Tpr,            coding: DIGITAL, channel: 11 },
-    TamperAlarm:            { reportbit: 12, sensors: SENSOR.Tpr,            coding: DIGITAL, channel: 12 },
-    FloodReport:            { reportbit: 13, sensors: SENSOR.Cap,            coding: ANALOG1, channel: 13 },
-    FloodAlarm:             { reportbit: 14, sensors: SENSOR.Cap,            coding: DIGITAL, channel: 14 },
-    FoilAlarm:              { reportbit: 15, sensors: SENSOR.Cap,            coding: DIGITAL, channel: 15 },
-    TempHumReport:          { reportbit: 16, sensors: SENSOR.Tmp|SENSOR.Hum, coding: TEMPHUM, channel: 80 },
-    AvgTempHumReport:       { reportbit: 17, sensors: SENSOR.Tmp|SENSOR.Hum, coding: TEMPHUM, channel: 81 },
-    TempDoorReport:         { reportbit: 18, sensors: SENSOR.Tmp|SENSOR.Dor, coding: TEMPDOOR,channel: 82 },
-    CapacitanceFloodReport: { reportbit: 19, sensors: SENSOR.Cap,            coding: ANALOG2, channel: 112 },
-    CapacitancePadReport:   { reportbit: 20, sensors: SENSOR.Cap,            coding: ANALOG2, channel: 113 },
-    CapacitanceEndReport:   { reportbit: 21, sensors: SENSOR.Cap,            coding: ANALOG2, channel: 114 },
-    UserSwitch1Alarm:       { reportbit: 22, sensors: SENSOR.Tpr,            coding: DIGITAL, channel: 16 },
-    DoorCountReport:        { reportbit: 23, sensors: SENSOR.Tpr,            coding: ANALOG2, channel: 17 },
-    PresenceReport:         { reportbit: 24, sensors: SENSOR.Prx,            coding: DIGITAL, channel: 18 },
-    IRProximityReport:      { reportbit: 25, sensors: SENSOR.Prx,            coding: ANALOG2, channel: 19 },
-    IRLProximityReport:     { reportbit: 26, sensors: SENSOR.Prx,            coding: ANALOG2, channel: 20 },
-    CloseProximitySensor:   { reportbit: 27, sensors: SENSOR.Prx,            coding: DIGITAL, channel: 21 },
-    DisinfectSensor:        { reportbit: 28, sensors: SENSOR.Prx,            coding: ANALOG1, channel: 22 },
+    UserButton1Alarm:       { reportbit:  0, sensors: SENSOR.BUTTON,               coding: GIT_IDD,  channel: 110 },
+    BatteryReport:          { reportbit:  1, sensors: SENSOR.BATTERY,              coding: ANALOG1,  channel: 1   },
+    TempReport:             { reportbit:  2, sensors: SENSOR.TEMP,                 coding: ANALOG2,  channel: 2   },
+    TempAlarm:              { reportbit:  3, sensors: SENSOR.TEMP,                 coding: ANALOG1,  channel: 3   },
+    AverageTempReport:      { reportbit:  4, sensors: SENSOR.TEMP,                 coding: ANALOG2,  channel: 4   },
+    AverageTempAlarm:       { reportbit:  5, sensors: SENSOR.TEMP,                 coding: ANALOG1,  channel: 5   },
+    HumidityReport:         { reportbit:  6, sensors: SENSOR.HUMID,                coding: ANALOG1,  channel: 6   },
+    LuxReport:              { reportbit:  7, sensors: SENSOR.LUX,                  coding: ANALOG2,  channel: 7   },
+    LuxReport2:             { reportbit:  8, sensors: SENSOR.LUX,                  coding: ANALOG2,  channel: 8   },
+    DoorReport:             { reportbit:  9, sensors: SENSOR.DOOR,                 coding: DIGITAL,  channel: 9   },
+    DoorAlarm:              { reportbit: 10, sensors: SENSOR.DOOR,                 coding: DIGITAL,  channel: 10  },
+    TamperReport:           { reportbit: 11, sensors: SENSOR.TAMPER,               coding: DIGITAL,  channel: 11  },
+    TamperAlarm:            { reportbit: 12, sensors: SENSOR.TAMPER,               coding: DIGITAL,  channel: 12  },
+    FloodReport:            { reportbit: 13, sensors: SENSOR.CAP,                  coding: ANALOG1,  channel: 13  },
+    FloodAlarm:             { reportbit: 14, sensors: SENSOR.CAP,                  coding: DIGITAL,  channel: 14  },
+    FoilAlarm:              { reportbit: 15, sensors: SENSOR.CAP,                  coding: DIGITAL,  channel: 15  },
+    TempHumReport:          { reportbit: 16, sensors: SENSOR.TEMP|SENSOR.HUMID,    coding: TEMPHUM,  channel: 80  },
+    AvgTempHumReport:       { reportbit: 17, sensors: SENSOR.TEMP|SENSOR.HUMID,    coding: TEMPHUM,  channel: 81  },
+    TempDoorReport:         { reportbit: 18, sensors: SENSOR.TEMP|SENSOR.DOOR,     coding: TEMPDOOR, channel: 82  },
+    CapacitanceFloodReport: { reportbit: 19, sensors: SENSOR.CAP,                  coding: ANALOG2,  channel: 112 },
+    CapacitancePadReport:   { reportbit: 20, sensors: SENSOR.CAP,                  coding: ANALOG2,  channel: 113 },
+    CapacitanceEndReport:   { reportbit: 21, sensors: SENSOR.CAP,                  coding: ANALOG2,  channel: 114 },
+    UserSwitch1Alarm:       { reportbit: 22, sensors: SENSOR.TAMPER,               coding: DIGITAL,  channel: 16  },
+    DoorCountReport:        { reportbit: 23, sensors: SENSOR.TAMPER,               coding: ANALOG2,  channel: 17  },
+    PresenceReport:         { reportbit: 24, sensors: SENSOR.PROX,                 coding: DIGITAL,  channel: 18  },
+    IRProximityReport:      { reportbit: 25, sensors: SENSOR.PROX,                 coding: ANALOG2,  channel: 19  },
+    IRLProximityReport:     { reportbit: 26, sensors: SENSOR.PROX,                 coding: ANALOG2,  channel: 20  },
+    CloseProximitySensor:   { reportbit: 27, sensors: SENSOR.PROX,                 coding: DIGITAL,  channel: 21  },
+    DisinfectSensor:        { reportbit: 28, sensors: SENSOR.PROX,                 coding: ANALOG1,  channel: 22  },
 }
 
 
