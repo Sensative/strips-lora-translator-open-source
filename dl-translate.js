@@ -92,7 +92,7 @@ const STRIPS_REPORTS = {
     DoorCountReport:        { reportbit: 23, sensors: SENSOR.TAMPER,               coding: ANALOG2,  channel: 17  },
     PresenceReport:         { reportbit: 24, sensors: SENSOR.PROX,                 coding: DIGITAL,  channel: 18  },
     IRProximityReport:      { reportbit: 25, sensors: SENSOR.PROX,                 coding: ANALOG2,  channel: 19  },
-    IRLProximityReport:     { reportbit: 26, sensors: SENSOR.PROX,                 coding: ANALOG2,  channel: 20  },
+    IRLPProximityReport:    { reportbit: 26, sensors: SENSOR.PROX,                 coding: ANALOG2,  channel: 20  },
     CloseProximitySensor:   { reportbit: 27, sensors: SENSOR.PROX,                 coding: DIGITAL,  channel: 21  },
     DisinfectSensor:        { reportbit: 28, sensors: SENSOR.PROX,                 coding: ANALOG1,  channel: 22  },
 }
