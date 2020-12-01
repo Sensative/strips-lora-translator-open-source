@@ -14,26 +14,32 @@ const decodeU32hex = (n) => {
 
 // Uplink data decoders, not yet completed - in place we replace the raw-translate.js
 const ANALOG1 = {
+    name    : 'Analog 1 byte',
     getsize : (bytes, pos) => 1,
     decode  : (bytes, pos) => bytes[pos],
 }
 const ANALOG2 = {
+    name    : 'Analog 2 bytes',
     getsize : (bytes, pos) => { return 2; },
     decode  : (bytes, pos) => (bytes[pos++] << 8) + bytes[pos]
 }
 const ANALOG3 = {
+    name    : 'Analog 3 bytes',
     getsize : (bytes, pos) => 3,
     decode  : (bytes, pos) => (bytes[pos++] << 16) + (bytes[pos++] << 8) + bytes[pos]
 }
 const ANALOG4 = {
+    name    : 'Analog 4 bytes',
     getsize : (bytes, pos) => 4,
     decode  : (bytes, pos) => (bytes[pos++] << 24) + (bytes[pos++] << 16) + (bytes[pos++] << 8) + bytes[pos]
 }
 const DIGITAL = {
+    name    : 'Digital 1 byte boolean',
     getsize : (bytes, pos) => 1,
     decode  : (bytes, pos) => !!bytes[pos]
 }
 const GIT_IDD= {
+    name    : 'Git revision and debug data',
     getsize : (bytes, pos) => 8,
     decode  : (bytes, pos) => { 
         return {
@@ -41,11 +47,13 @@ const GIT_IDD= {
             idd: decodeU32hex((bytes[pos++] << 24) + (bytes[pos++] << 16) + (bytes[pos++] << 8) + bytes[pos++]) }; }
 }
 const TEMPHUM= {
+    name    : 'Temp and humidity combined',
     getsize : (bytes, pos) => 4,
     decode  : (bytes, pos) => { 
         return { temp: ((bytes[pos++]<<8)+bytes[pos++])/10, hum: ((bytes[pos++]<<8)+bytes[pos++])/2}; }
 }
 const TEMPDOOR={
+    name    : 'Temp and door combined',
     getsize : (bytes, pos) => 3,
     decode  : (bytes, pos) => { 
         return { door: !!bytes[pos++], hum: (bytes[pos++]<<8)+bytes[pos++]}; }
@@ -93,8 +101,8 @@ const STRIPS_REPORTS = {
     PresenceReport:         { reportbit: 24, sensors: SENSOR.PROX,                 coding: DIGITAL,  channel: 18  },
     IRProximityReport:      { reportbit: 25, sensors: SENSOR.PROX,                 coding: ANALOG2,  channel: 19  },
     IRLPProximityReport:    { reportbit: 26, sensors: SENSOR.PROX,                 coding: ANALOG2,  channel: 20  },
-    CloseProximitySensor:   { reportbit: 27, sensors: SENSOR.PROX,                 coding: DIGITAL,  channel: 21  },
-    DisinfectSensor:        { reportbit: 28, sensors: SENSOR.PROX,                 coding: ANALOG1,  channel: 22  },
+    CloseProximityAlarm:    { reportbit: 27, sensors: SENSOR.PROX,                 coding: DIGITAL,  channel: 21  },
+    DisinfectAlarm:         { reportbit: 28, sensors: SENSOR.PROX,                 coding: ANALOG1,  channel: 22  },
 }
 
 
