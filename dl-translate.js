@@ -420,7 +420,7 @@ function test() {
     rl.question('Enter port (decimal): ', (port) => {
         port = Number(port);
         rl.question('Enter downlink (hex format): ', (hex) => { 
-//            try {
+            try {
                 let data = Buffer.from(hex, "hex");
                 let decoded = decodeLoraStripsDownlink(port, data);
                 console.log("Decoded:       " + JSON.stringify(decoded));
@@ -437,8 +437,8 @@ function test() {
                 let encoded2 = encodeLoraStripsDownlink(decoded2);
                 if (encoded2.data.toUpperCase() != encoded.data.toUpperCase())
                     console.log("WARN: Re-decoded and encoded data differs");
-//            } catch (err) { console.log(err.message); }
-            test(); // Bad tail recursion
+            } catch (err) { console.log(err.message); }
+            test(); // Ugly tail recursion, typical for callback style
         })
     })
 }
