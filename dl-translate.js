@@ -1,6 +1,6 @@
 // Copyright (C) 2020, www.sensative.com
 //
-//  Downlink decoding
+//  Downlink decoding and encoding for Sensative Lora Strips
 //
 
 // Raw data decoder functions
@@ -10,6 +10,16 @@ const decodeU32dec = (n) => {
 
 const decodeU32hex = (n) => {
     return 'Ox' + n.toString(16);
+}
+
+function d2h(d, bytes) {
+    const size = bytes * 2;
+    var hex = Number(d).toString(16);
+    if (hex.length > size)
+        hex = hex.substring(hex.length-size);
+    while (hex.length < size)
+        hex = "0" + hex;
+    return hex;
 }
 
 // Uplink data decoders, not yet completed - in place we replace the raw-translate.js
@@ -220,6 +230,18 @@ function decodeSetSetting(bytes, pos) {
     return result;
 }
 
+// Encode settings, ignore fields that are not same as a particular setting name
+function encodeSetSetting(obj) {
+    var res = '';
+    for (var field in obj)
+        for (var setting in STRIPS_SETTINGS)
+            if (field == setting) {
+                // @TODO: Per-setting decoder same as encoder
+                res += d2h(STRIPS_SETTINGS[setting].id,1) + d2h(obj[setting].value);
+            }
+}
+
+
 function decodeGetSetting(bytes, pos) {
     let result = new Object();
     while (pos < bytes.length) {
@@ -238,6 +260,19 @@ function decodeGetSetting(bytes, pos) {
     return result;
 }
 
+// Assume object has a number of fields names corresponding to STRIPS_SETTINGS fields. 
+// Ignores fields that do not have corresponding setting
+function encodeGetSetting(obj) {
+    let res = '';
+    for (var field in obj)
+        for (var setting in STRIPS_SETTINGS)
+            if (field == setting) {
+                res += d2h(STRIPS_SETTINGS[setting].id, 1);
+                continue;
+            }
+    return res;
+}
+
 // 2 bytes first, 2 bytes last history sequence number
 function decodeGetHistory(bytes, pos) {
     if (bytes.length != 5)
@@ -247,14 +282,31 @@ function decodeGetHistory(bytes, pos) {
     return {first:first, last:last, unit:'History sequence number'};
 }
 
+function encodeGetHistory(obj) {
+    if (false == obj.hasOwnProperty('first') || false == obj.hasOwnProperty('last'))
+        throw {message:'Expected properties first and last missing'}
+    return d2h(obj.first,2) + d2h(obj.last,2);
+}
+
+
 function decodeSetProfile(bytes, pos) {
     if (bytes.length != 2)
         throw {message: 'Set profile command: Bad package size'}
     const profile = bytes[pos++];
     for (var id in STRIPS_PROFILES)
         if (STRIPS_PROFILES[id].id == profile)
-            return {profile: STRIPS_PROFILES[id].name}
-    throw {message: 'Set profile: Unknown profile ' + profile}
+            return {profile: STRIPS_PROFILES[id].name, id:id}
+    throw {message: 'Unknown profile ' + profile}
+}
+
+// Checks profile ID
+function encodeSetProfile(obj) {
+    if (false == obj.hasOwnProperty('id'))
+        throw {message:'Profile id is missing'};
+    const profile = obj.id;
+    if (false == STRIPS_PROFILES.hasOwnProperty(profile))
+        throw {message:'Unknown profile ' + profile};
+    return d2h(STRIPS_PROFILES[profile].id, 1);
 }
 
 function decodeCmdUnjoin(bytes, pos) {
@@ -264,37 +316,64 @@ function decodeCmdUnjoin(bytes, pos) {
     return {minutes: minutes};
 } 
 
+function encodeCmdUnjoin(obj) {
+    if (false == obj.hasOwnProperty('minutes'))
+        throw {message: 'Unjoin requires minutes field'};
+    return d2h(obj.minutes, 2);
+}
+
 function decodeEndComp(bytes, pos) {
     if (2 != bytes.length)
         throw {message: 'End compliance test: Bad package size'}
     return {kind: 'End compliance test'};
 }
 
+function encodeEndComp(obj) {
+    throw {message: "End compliance encoding not implemented"};
+}
+
 const STRIPS_PORTCOMMANDS = {
-    SET_SETTING : { port: 11,  cmd: 1, decode: decodeSetSetting, kind: 'Set setting'},
-    GET_SETTING : { port: 11,  cmd: 2, decode: decodeGetSetting, kind: 'Get setting'},
-    GET_HISTORY : { port: 2,   cmd: 1, decode: decodeGetHistory, kind: 'Get history'},
-    SET_PROFILE : { port: 10,  cmd: 1, decode: decodeSetProfile, kind: 'Set profile'},
-    CMD_UNJOIN  : { port: 10,  cmd: 8, decode: decodeCmdUnjoin,  kind: 'Unjoin'},
-    CMD_ENDCOMP : { port: 224, cmd: 6, decode: decodeEndComp,    kind: 'End compliance test'},
+    SET_SETTING : { port: 11,  cmd: 1, decode: decodeSetSetting, encode: encodeSetSetting, name: 'Set setting'},
+    GET_SETTING : { port: 11,  cmd: 2, decode: decodeGetSetting, encode: encodeGetSetting, name: 'Get setting'},
+    GET_HISTORY : { port: 2,   cmd: 1, decode: decodeGetHistory, encode: encodeGetHistory, name: 'Get history'},
+    SET_PROFILE : { port: 10,  cmd: 1, decode: decodeSetProfile, encode: encodeSetProfile, name: 'Set profile'},
+    CMD_UNJOIN  : { port: 10,  cmd: 8, decode: decodeCmdUnjoin,  encode: encodeCmdUnjoin,  name: 'Unjoin'},
+    CMD_ENDCOMP : { port: 224, cmd: 6, decode: decodeEndComp,    encode: encodeEndComp,    name: 'End compliance test'},
 }
 
 // Either return a structure representing the downlink, or throw an error with message corresponding to the problem
-function decodeLoraStripsDownlink(port, bytes) {
+const decodeLoraStripsDownlink = (port, bytes) => {
     if (bytes == null || bytes.length < 2)
         throw { message: 'Not enough data'};
     const cmd = bytes[0];
     for (var id in STRIPS_PORTCOMMANDS) {
         if (STRIPS_PORTCOMMANDS[id].port == port && STRIPS_PORTCOMMANDS[id].cmd == cmd) {
             let result  = STRIPS_PORTCOMMANDS[id].decode(bytes, 1);
-            result['kind'] = STRIPS_PORTCOMMANDS[id].kind;
+            result['cmd'] = STRIPS_PORTCOMMANDS[id];
             return result;
         }
     }
     throw { message: 'Unrecognized downlink'};
 }
 
-// Test code follows
+// Function for encoding a downlink (using object of same format as decodeLoraStripsDownlink),
+// Specifically: each field is one of STRIPS_SETTINIGS properties. Only value field is read from each in case of SET_SETTING.
+// In addition a "cmd" field should be present to match one of the PORT_COMMANDS. See each function for further data.
+const encodeLoraStripsDownlink = (obj) => {
+    if (null == obj || false == obj.hasOwnProperty('cmd'))
+        throw {message:'Bad object for encode, null or missing cmd.'}
+    const cmd = obj['cmd'].name;
+    for (var c in STRIPS_PORTCOMMANDS) {
+        if (cmd == STRIPS_PORTCOMMANDS[c].name) {
+            return { data: d2h(STRIPS_PORTCOMMANDS[c].cmd, 1) + STRIPS_PORTCOMMANDS[c].encode(obj), 
+                     port: STRIPS_PORTCOMMANDS[c].port };
+        }
+    }
+    throw {message: 'Unknown command: ' + cmd}
+}
+
+// Test/example code follows
+
 const readline = require("readline");
 const rl = readline.createInterface({
     input: process.stdin,
@@ -304,10 +383,18 @@ const rl = readline.createInterface({
 function test() {
     rl.question('Enter port (decimal): ', (port) => {
         port = Number(port);
-        rl.question('Enter downlink (hex format): ', (answer) => { 
+        rl.question('Enter downlink (hex format): ', (hex) => { 
             try {
-                let data = Buffer.from(answer, "hex");
-                console.log(JSON.stringify(decodeLoraStripsDownlink(port, data)))
+                let data = Buffer.from(hex, "hex");
+                let decoded = decodeLoraStripsDownlink(port, data);
+                console.log(JSON.stringify(decoded));
+                let encoded = encodeLoraStripsDownlink(decoded);
+                console.log("Encoded again: " + JSON.stringify(encoded));
+                if (encoded.data != hex)
+                    console.log("WARN: Encode result is different from decode result");
+                if (encoded.port != port)
+                    console.log("WARN: Encoded port "+encoded.port+" differs from port.");
+
             } catch (err) { console.log(err.message); }
             test(); // Bad tail recursion
         })
@@ -315,3 +402,5 @@ function test() {
 }
 
 test();
+
+
