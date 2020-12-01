@@ -14,27 +14,27 @@ const decodeU32hex = (n) => {
 
 // Uplink data decoders, not yet completed - in place we replace the raw-translate.js
 const ANALOG1 = {
-    name    : 'Analog 1 byte',
+    name    : '1 byte',
     getsize : (bytes, pos) => 1,
     decode  : (bytes, pos) => bytes[pos],
 }
 const ANALOG2 = {
-    name    : 'Analog 2 bytes',
+    name    : '2 bytes',
     getsize : (bytes, pos) => { return 2; },
     decode  : (bytes, pos) => (bytes[pos++] << 8) + bytes[pos]
 }
 const ANALOG3 = {
-    name    : 'Analog 3 bytes',
+    name    : '3 bytes',
     getsize : (bytes, pos) => 3,
     decode  : (bytes, pos) => (bytes[pos++] << 16) + (bytes[pos++] << 8) + bytes[pos]
 }
 const ANALOG4 = {
-    name    : 'Analog 4 bytes',
+    name    : '4 bytes',
     getsize : (bytes, pos) => 4,
     decode  : (bytes, pos) => (bytes[pos++] << 24) + (bytes[pos++] << 16) + (bytes[pos++] << 8) + bytes[pos]
 }
 const DIGITAL = {
-    name    : 'Digital 1 byte boolean',
+    name    : '1 byte boolean',
     getsize : (bytes, pos) => 1,
     decode  : (bytes, pos) => !!bytes[pos]
 }
