@@ -436,9 +436,8 @@ function test() {
                 if (encoded.port != port)
                     console.log("WARN: Encoded port "+encoded.port+" differs from port.");
 
-                // Check if there are any exceptions when re-encoding the same data
+                // Check if there are any exceptions or errors when re-encoding the same data
                 let decoded2 = decodeLoraStripsDownlink(encoded.port, Buffer.from(encoded.data, "hex"));
-                console.log("Decoded again: " + JSON.stringify(decoded2));
                 let encoded2 = encodeLoraStripsDownlink(decoded2);
                 if (encoded2.data.toUpperCase() != encoded.data.toUpperCase())
                     console.log("WARN: Re-decoded and encoded data differs");
