@@ -80,6 +80,7 @@ const TEMPDOOR={
 }
 
 // Logical sensors connected to each report, may be used to define products in terms of what sensors are available
+// and inversely, only select relevant setttings for a given product.
 const SENSOR = {
     BUTTON:    1<<1,
     BATTERY:   1<<2,
