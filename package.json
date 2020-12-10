@@ -2,7 +2,7 @@
   "name": "strips-lora-translator-open-source",
   "version": "1.0.0",
   "description": "Open source translator for Sensative Strips (LoRaWan sensors)",
-  "main": "index.js",
+  "main": "strips-translate.js",
   "repository": "git@gitlab.com:sensative/strips-lora-translator-open-source.git",
   "author": "Lars Mats <lars.mats@sensative.com>",
   "license": "MIT",

@@ -1,15 +1,17 @@
+// Example simple server with very simple API key handling, HTTPS.
 
 const raw_translate = require ('./raw-translate');
 const https = require('https');
 const fs = require('fs');
 const url = require('url');
+
+
 var apikeys = [];
 try {
     apikeys = fs.readdirSync('./apikeys');
 } catch {};
 
 apikeys.length > 0 || console.log("*** No API keys folder present or folder empty. Proceeding without API access control.");
-
 
 const hex2data = hex => {
     if (hex.length %2 !== 0)

@@ -1,6 +1,5 @@
-// Copyright (C) 2020, www.sensative.com
-//
-//  Downlink decoding and encoding for Sensative Lora Strips
+//  MIT License, see LICENSE.txt
+//  Rewritten downlink decoding and encoding for Sensative Lora Strips
 //
 
 // Raw data decoder functions
@@ -425,7 +424,7 @@ const decodeDirectUplink = (bytes) => {
 }
 
 const decodeHistoryUplink = (bytes) => {
-
+    // @TODO
 }
 
 const STRIPS_UPLINK_PORTS = {
@@ -474,15 +473,8 @@ const encodeLoraStripsDownlink = (obj) => {
     throw {message: 'Unknown command: ' + cmd}
 }
 
-// Test/example code follows
-
-const readline = require("readline");
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-
-function test() {
+// Test/example use code follows
+function test2(rl) {
     rl.question('Enter port (decimal): ', (port) => {
         port = Number(port);
         rl.question('Enter downlink (hex format): ', (hex) => { 
@@ -503,9 +495,22 @@ function test() {
                 if (encoded2.data.toUpperCase() != encoded.data.toUpperCase())
                     console.log("WARN: Re-decoded and encoded data differs");
             } catch (err) { console.log(err.message); }
-            test(); // Ugly tail recursion, typical for callback style
+            test2(rl); // Ugly tail recursion, happens callback style
         })
     })
 }
 
-test();
+function commandLineTest() {
+    const readline = require("readline");
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    test2(rl);
+}
+
+// These functions are exported from this
+exports.encodeLoraStripsDownlink = decodeLoraStripsDownlink;
+exports.decodeLoraStripsUplink   = decodeLoraStripsUplink;
+exports.decodeLoraStripsUplink   = decodeLoraStripsUplink; 
+exports.commandLine              = commandLineTest;
