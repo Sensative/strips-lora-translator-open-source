@@ -473,29 +473,34 @@ const encodeLoraStripsDownlink = (obj) => {
     throw {message: 'Unknown command: ' + cmd}
 }
 
+// Legacy translator
+const rawTranslate = require('./raw-translate');
+
+const test_modes = {
+    d: { name: 'downlink',          func: (port, data) => decodeLoraStripsDownlink(port, data) },
+    u: { name: 'uplink',            func: (port, data) => decodeLoraStripsUplink(port, data) },
+    l: { name: 'legacy uplink',     func: (port, data) => rawTranslate(data, port) },
+}
+
 // Test/example use code follows
 function test2(rl) {
-    rl.question('Enter port (decimal): ', (port) => {
-        port = Number(port);
-        rl.question('Enter downlink (hex format): ', (hex) => { 
-            try {
-                let data = Buffer.from(hex, "hex");
-                let decoded = decodeLoraStripsDownlink(port, data);
-                console.log("Decoded:       " + JSON.stringify(decoded));
-                let encoded = encodeLoraStripsDownlink(decoded);
-                console.log("Encoded again: " + JSON.stringify(encoded));
-                if (encoded.data.toUpperCase() != hex.toUpperCase())
-                    console.log("WARN: Encode result is different from decode result");
-                if (encoded.port != port)
-                    console.log("WARN: Encoded port "+encoded.port+" differs from port.");
-
-                // Check if there are any exceptions or errors when re-encoding the same data
-                let decoded2 = decodeLoraStripsDownlink(encoded.port, Buffer.from(encoded.data, "hex"));
-                let encoded2 = encodeLoraStripsDownlink(decoded2);
-                if (encoded2.data.toUpperCase() != encoded.data.toUpperCase())
-                    console.log("WARN: Re-decoded and encoded data differs");
-            } catch (err) { console.log(err.message); }
-            test2(rl); // Ugly tail recursion, happens callback style
+    rl.question('Select mode (' + Object.keys(test_modes).map(k=>k + '=' + test_modes[k].name) + '): ', mode => {
+        if (!test_modes.hasOwnProperty(mode)) {
+            console.log('Unknown mode' + mode);
+            test2(rl);
+        }
+        const func = test_modes[mode].func;
+        const name = test_modes[mode].name;
+        rl.question('Enter '+ name +' port (decimal): ', (port) => {
+            port = Number(port);
+            rl.question('Enter ' + name +' (hex format): ', (hex) => { 
+                try {
+                    let data = Buffer.from(hex, "hex");
+                    let decoded = func(port, data);
+                    console.log(JSON.stringify(decoded));
+                } catch (err) { console.log(err.message); }
+                test2(rl); // Ugly tail recursion, happens callback style
+            })
         })
     })
 }
@@ -514,4 +519,4 @@ exports.encodeLoraStripsDownlink = decodeLoraStripsDownlink;
 exports.decodeLoraStripsUplink   = decodeLoraStripsUplink;
 exports.decodeLoraStripsUplink   = decodeLoraStripsUplink; 
 exports.commandLine              = commandLineTest;
-exports.rawTranslate             = require('./raw-translate');
+exports.rawTranslate             = rawTranslate;
