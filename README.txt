@@ -1,33 +1,45 @@
 
-INTRODUCTION
-
-This is a small open source project serving a secure REST API (using node.js) for translating 
+1. INTRODUCTION
+This is a small open source project serving the purpose of interacting with Sensative AB 
+Strips Lora sensor products. It examplifies using a secure REST API (using node.js) for translating 
 data from the Sensative LoRa Strips (www.sensative.com). It can serve as reference for custom
 translation work, or it can be used off-the-shelf as a microservice serving translations in 
-your infrastructure.
+your infrastructure. Additionally the code includes metadata for composing downlinks or 
+translating them.
 
-See LICENSE.txt for license and copyright information (MIT based open source license).
+See LICENSE.txt for license and copyright information (MIT open source license).
 
-SYSTEM REQUIREMENTS:
-
+2. SYSTEM REQUIREMENTS:
 It is assumed you have node.js installed, and that you are using bash shell. 
+Using it as npm/yarn package is also possible, see installation below.
 It has been developed only on Mac OSX with node 13.8.0.
 
-INSTALLATION:
-
+3. INSTALLATION:
+For running as microservice, as is with example code as with serve.sh
 1. Clone this repository
 2. Obtain a certificate and key and put in in a cert folder within the repository
 3. Either launch this using the serve.sh file or using command line or other method, pass PORT 
 as environment parameter.
 
-USE:
+  or
+
+Include this in your application by adding this dependency
+
+ yarn add git+https://git@gitlab.com/sensative/strips-lora-translator-open-source#master
+
+Then in your javascript file (example for command line use):
+
+    const translator = require('strips-lora-translator-open-source');
+    translator.commandLine(); // Example, you can also review this file to see how to directly access its functions.
+
+4. EXAMPLE MICROSERVICE USAGE:
 
 make requests to host:{PORT}/translate?p={LORA PORT}&d={HEXADECIMAL LORA PAYLOAD}
 
-If the data is correct it will return a JSON encoded object representing the data sent from the 
+If the data is correct it will return a JSON encoded object representing the data sent to/from from the 
 LoRa Strip.
 
-API KEYS (OPTIONAL):
+4.1 API KEYS (OPTIONAL):
 
 Additionally, should you wish you can add rudimentary API key handling to manage who can make 
 calls to this API. The API keys are intended to be secret but not severely secret since this 
@@ -41,7 +53,7 @@ folder.
 
 Example: host:{PORT}/translate?p={LORA PORT}&d={HEXADECIMAL LORA PAYLOAD}&k={key, e.g. a base64 encoded hash}
 
-EXAMPLE:
+4.2 EXAMPLE:
 
 Using a self-generated certificate, an apikeys folder containing a file examplekey2 and PORT 
 being set to 38111.
