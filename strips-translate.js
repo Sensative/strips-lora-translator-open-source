@@ -514,4 +514,4 @@ exports.encodeLoraStripsDownlink = decodeLoraStripsDownlink;
 exports.decodeLoraStripsUplink   = decodeLoraStripsUplink;
 exports.decodeLoraStripsUplink   = decodeLoraStripsUplink; 
 exports.commandLine              = commandLineTest;
-exports.rawTranslate             = require('./raw-translate').rawTranslate;
+exports.rawTranslate             = require('./raw-translate');
