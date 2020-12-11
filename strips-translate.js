@@ -2,6 +2,9 @@
 //  Rewritten downlink decoding and encoding for Sensative Lora Strips
 //
 
+const { BADHINTS } = require('dns');
+const { report } = require('process');
+
 // Raw data decoder functions
 const decodeU32dec = (n) => {
     return n.toString(10);
@@ -30,44 +33,36 @@ const encodeU32 = (value) => {
     return d2h(value, 4);
 }
 
-// Uplink data decoders, not yet completed - in case we replace the raw-translate.js
+// Uplink data decoders
 const UNSIGN1 = {
-    name    : '1 byte',
     getsize : (bytes, pos) => 1,
     decode  : (bytes, pos) => bytes[pos],
 }
 const UNS1FP2 = {
-    name    : UNSIGN1.name + " fp .5",
     getsize : (bytes, pos) => UNSIGN1.getsize(bytes, pos),
     decode  : (bytes, pos) => UNSIGN1.decode(bytes, pos) / 2,
 }
 const UNSIGN2 = {
-    name    : '2 bytes little endian unsigned',
     getsize : (bytes, pos) => { return 2; },
     decode  : (bytes, pos) => (bytes[pos++] << 8) + bytes[pos]
 }
 const SIGNED2 = {
-    name    : '2 bytes little endian signed',
     getsize : (bytes, pos) => 2,
     decode  : (bytes, pos) => ((bytes[pos] & 0x80 ? 0xFFFF<<16 : 0) | (bytes[pos++] << 8) | bytes[pos++])
 }
 const SI2FP10 = {
-    name    : SIGNED2.name + ' fp .1',
     getsize : (bytes, pos) => SIGNED2.getsize(bytes, pos),
     decode  : (bytes, pos) => SIGNED2.decode(bytes, pos)/10
 }
 const TMPALRM = {
-    name    : 'Tmp alarm',
     getsize : (bytes, pos) => 1,
     decode  : (bytes, pos) => { return {high: !!(bytes[pos] & 0x01), low: !!(bytes[pos] & 0x02)}; }
 }
 const DIGITAL = {
-    name    : '1 byte boolean',
     getsize : (bytes, pos) => 1,
     decode  : (bytes, pos) => !!bytes[pos]
 }
 const GIT_IDD = {
-    name    : 'Git revision and debug data',
     getsize : (bytes, pos) => 8,
     decode  : (bytes, pos) => { 
         return {
@@ -75,20 +70,18 @@ const GIT_IDD = {
             idd: d2h((bytes[pos++] << 24) + (bytes[pos++] << 16) + (bytes[pos++] << 8) + bytes[pos++], 4) }; }
 }
 const TEMPHUM = {
-    name    : 'Temp and humidity combined',
     getsize : (bytes, pos) => UNS1FP2.getsize(bytes, pos) + SI2FP10.getsize(bytes, pos+1),
     decode  : (bytes, pos) => { return { humidity: { value: UNS1FP2(bytes, pos), unit:'%'}, temp: {value: SI2FP10(bytes, pos+1), unit: 'C'}} ; }
 }
 
 const TEMPDOR = {
-    name    : 'Temp and door combined',
     getsize : (bytes, pos) => 3,
     decode  : (bytes, pos) => { return { door: {value: DIGITAL.decode(bytes, pos), unit: 'bool'}, temp: { value: SI2FP10(bytes, pos+1), unit: 'C'}}; }
 }
 
 // Logical sensors connected to each report, may be used to define products in terms of what sensors are available
 // and inversely, only select relevant setttings for a given product.
-const SENSOR = {
+const STRIPS_SENSOR = {
     BUTTON:    1<<1,
     BATTERY:   1<<2,
     TEMP:      1<<3,
@@ -102,35 +95,35 @@ const SENSOR = {
 
 // All report types including what is required for decode and what sensors are required for each
 const STRIPS_REPORTS = {
-    UserButton1Alarm:       { reportbit:  0, sensors: SENSOR.BUTTON,            coding: (b,p)=>{ return {value: GIT_IDD(b,p), unit:'data'}},  channel: 110 },
-    BatteryReport:          { reportbit:  1, sensors: SENSOR.BATTERY,           coding: (b,p)=>{ return {value: UNSIGN1(b,p), unit:'%'   }},  channel: 1   },
-    TempReport:             { reportbit:  2, sensors: SENSOR.TEMP,              coding: (b,p)=>{ return {value: SI2FP10(b,p), unit:'C'   }},  channel: 2   },
-    TempAlarm:              { reportbit:  3, sensors: SENSOR.TEMP,              coding: (b,p)=>{ return {value: TMPALRM(b,p), unit:'pair'}},  channel: 3   },
-    AverageTempReport:      { reportbit:  4, sensors: SENSOR.TEMP,              coding: (b,p)=>{ return {value: SI2FP10(b,p), unit:'C'   }},  channel: 4   },
-    AverageTempAlarm:       { reportbit:  5, sensors: SENSOR.TEMP,              coding: (b,p)=>{ return {value: TMPALRM(b,p), unit:'pair'}},  channel: 5   },
-    HumidityReport:         { reportbit:  6, sensors: SENSOR.HUMID,             coding: (b,p)=>{ return {value: UNS1FP2(b,p), unit:'%'   }},  channel: 6   },
-    LuxReport:              { reportbit:  7, sensors: SENSOR.LUX,               coding: (b,p)=>{ return {value: UNSIGN2(b,p), unit:'Lux' }},  channel: 7   },
-    LuxReport2:             { reportbit:  8, sensors: SENSOR.LUX,               coding: (b,p)=>{ return {value: UNSIGN2(b,p), unit:'Lux' }},  channel: 8   },
-    DoorReport:             { reportbit:  9, sensors: SENSOR.DOOR,              coding: (b,p)=>{ return {value: DIGITAL(b,p), unit:'bool'}},  channel: 9   },
-    DoorAlarm:              { reportbit: 10, sensors: SENSOR.DOOR,              coding: (b,p)=>{ return {value: DIGITAL(b,p), unit:'bool'}},  channel: 10  },
-    TamperReport:           { reportbit: 11, sensors: SENSOR.TAMPER,            coding: (b,p)=>{ return {value: DIGITAL(b,p), unit:'bool'}},  channel: 11  },
-    TamperAlarm:            { reportbit: 12, sensors: SENSOR.TAMPER,            coding: (b,p)=>{ return {value: DIGITAL(b,p), unit:'bool'}},  channel: 12  },
-    FloodReport:            { reportbit: 13, sensors: SENSOR.CAP,               coding: (b,p)=>{ return {value: UNSIGN1(b,p), unit:'%'   }},  channel: 13  },
-    FloodAlarm:             { reportbit: 14, sensors: SENSOR.CAP,               coding: (b,p)=>{ return {value: DIGITAL(b,p), unit:'bool'}},  channel: 14  },
-    FoilAlarm:              { reportbit: 15, sensors: SENSOR.CAP,               coding: (b,p)=>{ return {value: DIGITAL(b,p), unit:'bool'}},  channel: 15  },
-    TempHumReport:          { reportbit: 16, sensors: SENSOR.TEMP|SENSOR.HUMID, coding: (b,p)=>TEMPHUM(b,p),                                  channel: 80  },
-    AvgTempHumReport:       { reportbit: 17, sensors: SENSOR.TEMP|SENSOR.HUMID, coding: (b,p)=>TEMPHUM(b,p),                                  channel: 81  },
-    TempDoorReport:         { reportbit: 18, sensors: SENSOR.TEMP|SENSOR.DOOR,  coding: (b,p)=>TEMPDOR(b,p),                                  channel: 82  },
-    CapacitanceFloodReport: { reportbit: 19, sensors: SENSOR.CAP,               coding: (b,p)=>{ return {value: UNSIGN2(b,p), unit:'uF'  }},  channel: 112 },
-    CapacitancePadReport:   { reportbit: 20, sensors: SENSOR.CAP,               coding: (b,p)=>{ return {value: UNSIGN2(b,p), unit:'uF'  }},  channel: 113 },
-    CapacitanceEndReport:   { reportbit: 21, sensors: SENSOR.CAP,               coding: (b,p)=>{ return {value: UNSIGN2(b,p), unit:'uF'  }},  channel: 114 },
-    UserSwitch1Alarm:       { reportbit: 22, sensors: SENSOR.TAMPER,            coding: (b,p)=>{ return {value: DIGITAL(b,p), unit:'bool'}},  channel: 16  },
-    DoorCountReport:        { reportbit: 23, sensors: SENSOR.TAMPER,            coding: (b,p)=>{ return {value: UNSIGN2(b,p), unit:'u16' }},  channel: 17  },
-    PresenceReport:         { reportbit: 24, sensors: SENSOR.PROX,              coding: (b,p)=>{ return {value: DIGITAL(b,p), unit:'bool'}},  channel: 18  },
-    IRProximityReport:      { reportbit: 25, sensors: SENSOR.PROX,              coding: (b,p)=>{ return {value: UNSIGN2(b,p), unit:'u16' }},  channel: 19  },
-    IRCloseProximityReport: { reportbit: 26, sensors: SENSOR.PROX,              coding: (b,p)=>{ return {value: UNSIGN2(b,p), unit:'u16' }},  channel: 20  },
-    CloseProximityAlarm:    { reportbit: 27, sensors: SENSOR.PROX,              coding: (b,p)=>{ return {value: DIGITAL(b,p), unit:'bool'}},  channel: 21  },
-    DisinfectAlarm:         { reportbit: 28, sensors: SENSOR.PROX,              coding: (b,p)=>{ return {value: UNSIGN1(b,p), unit:'enum'}},  channel: 22  },
+    UserButton1Alarm:       { reportbit:  0, sensors: STRIPS_SENSOR.BUTTON,                   coding: GIT_IDD, channel: 110, unit:''    },
+    BatteryReport:          { reportbit:  1, sensors: STRIPS_SENSOR.BATTERY,                  coding: UNSIGN1, channel: 1,   unit:'%'   },
+    TempReport:             { reportbit:  2, sensors: STRIPS_SENSOR.TEMP,                     coding: SI2FP10, channel: 2,   unit:'C'   },
+    TempAlarm:              { reportbit:  3, sensors: STRIPS_SENSOR.TEMP,                     coding: TMPALRM, channel: 3,   unit:''    },
+    AverageTempReport:      { reportbit:  4, sensors: STRIPS_SENSOR.TEMP,                     coding: SI2FP10, channel: 4,   unit:'C'   },
+    AverageTempAlarm:       { reportbit:  5, sensors: STRIPS_SENSOR.TEMP,                     coding: TMPALRM, channel: 5,   unit:''    },
+    HumidityReport:         { reportbit:  6, sensors: STRIPS_SENSOR.HUMID,                    coding: UNS1FP2, channel: 6,   unit:'%'   },
+    LuxReport:              { reportbit:  7, sensors: STRIPS_SENSOR.LUX,                      coding: UNSIGN2, channel: 7,   unit:'Lux' },
+    LuxReport2:             { reportbit:  8, sensors: STRIPS_SENSOR.LUX,                      coding: UNSIGN2, channel: 8,   unit:'Lux' },
+    DoorReport:             { reportbit:  9, sensors: STRIPS_SENSOR.DOOR,                     coding: DIGITAL, channel: 9,   unit:''    },
+    DoorAlarm:              { reportbit: 10, sensors: STRIPS_SENSOR.DOOR,                     coding: DIGITAL, channel: 10,  unit:''    },
+    TamperReport:           { reportbit: 11, sensors: STRIPS_SENSOR.TAMPER,                   coding: DIGITAL, channel: 11,  unit:''    },
+    TamperAlarm:            { reportbit: 12, sensors: STRIPS_SENSOR.TAMPER,                   coding: DIGITAL, channel: 12,  unit:''    },
+    FloodReport:            { reportbit: 13, sensors: STRIPS_SENSOR.CAP,                      coding: UNSIGN1, channel: 13,  unit:''    },
+    FloodAlarm:             { reportbit: 14, sensors: STRIPS_SENSOR.CAP,                      coding: DIGITAL, channel: 14,  unit:''    },
+    FoilAlarm:              { reportbit: 15, sensors: STRIPS_SENSOR.CAP,                      coding: DIGITAL, channel: 15,  unit:''    },
+    TempHumReport:          { reportbit: 16, sensors: STRIPS_SENSOR.TEMP|STRIPS_SENSOR.HUMID, coding: TEMPHUM, channel: 80,  unit:''    },
+    AvgTempHumReport:       { reportbit: 17, sensors: STRIPS_SENSOR.TEMP|STRIPS_SENSOR.HUMID, coding: TEMPHUM, channel: 81,  unit:''    },
+    TempDoorReport:         { reportbit: 18, sensors: STRIPS_SENSOR.TEMP|STRIPS_SENSOR.DOOR,  coding: TEMPDOR, channel: 82,  unit:''    },
+    CapacitanceFloodReport: { reportbit: 19, sensors: STRIPS_SENSOR.CAP,                      coding: UNSIGN2, channel: 112, unit:''    },
+    CapacitancePadReport:   { reportbit: 20, sensors: STRIPS_SENSOR.CAP,                      coding: UNSIGN2, channel: 113, unit:''    },
+    CapacitanceEndReport:   { reportbit: 21, sensors: STRIPS_SENSOR.CAP,                      coding: UNSIGN2, channel: 114, unit:''    },
+    UserSwitch1Alarm:       { reportbit: 22, sensors: STRIPS_SENSOR.TAMPER,                   coding: DIGITAL, channel: 16,  unit:''    },
+    DoorCountReport:        { reportbit: 23, sensors: STRIPS_SENSOR.TAMPER,                   coding: UNSIGN2, channel: 17,  unit:''    },
+    PresenceReport:         { reportbit: 24, sensors: STRIPS_SENSOR.PROX,                     coding: DIGITAL, channel: 18,  unit:''    },
+    IRProximityReport:      { reportbit: 25, sensors: STRIPS_SENSOR.PROX,                     coding: UNSIGN2, channel: 19,  unit:''    },
+    IRCloseProximityReport: { reportbit: 26, sensors: STRIPS_SENSOR.PROX,                     coding: UNSIGN2, channel: 20,  unit:''    },
+    CloseProximityAlarm:    { reportbit: 27, sensors: STRIPS_SENSOR.PROX,                     coding: DIGITAL, channel: 21,  unit:''    },
+    DisinfectAlarm:         { reportbit: 28, sensors: STRIPS_SENSOR.PROX,                     coding: UNSIGN1, channel: 22,  unit:''    },
 }
 
 
@@ -388,43 +381,78 @@ const STRIPS_PORTCOMMANDS = {
     CMD_ENDCOMP : { port: 224, cmd: 6, decode: decodeEndComp,    encode: encodeEndComp,    name: 'End compliance test'  },
 }
 
-const getReportFromBytes = channel => {
+const getReportFromByte = channel => {
     for (let report in STRIPS_REPORTS) 
         if (STRIPS_REPORTS[report].channel == channel)
             return report;
     throw { message: 'Unknown channel: ' + channel };
 }
 
-const getHistoryCountAndCheckLength = bytes => {
-    let pos = 0;
-    let historyItemCount = 0;
-    let decoded = {};
-    while (pos < bytes.length) {
-        // First a byte with a history bit and a channel ID, ignore history bits in this phase
-        if (bytes[pos] & 0x80)
-            historyItemCount++;
-        let report = getReportFromBytes(bytes[pos] & 0x7f);
-        let size   = report.coding.getsize(bytes, pos+1);
-        let endpos = pos + size + 1;
-        if (endpos > bytes.length)
-            throw {message: 'Incomplete data'};
-        decoded[report] = report.coding.decode(bytes, pos+1);
-        pos = endpos;
-    }
-    decoded.historyItemCount = historyItemCount;
-    decoded.timestamp     = new Date().getTime();
+const decodeAndPackItem = (report, bytes, pos, hpos) => {
+    const decodedItem = report.coding.decode(bytes, pos);
+    let decoded;
+    if (typeof decodedItem === 'object')
+        decoded = decodedItem;
+    else 
+        decoded = { value: decodedItem, unit: report.unit }
+    if (hpos != null) 
+        decoded.historyPosition = hpos;
     return decoded;
 }
 
 const decodeDirectUplink = (bytes) => {
-    // 1. Check that the contained reports are complete vs length. It will throw if bad length
-    const history_count = getHistoryCountAndCheckLength(bytes);
-    // 2. Decode all contained reports and add to one object
-    
+    if (bytes.length < 2)
+        throw ('message: Too few bytes');
+    let pos = 0;
+    const hCount = (bytes[pos++]<<8) | bytes[pos++]; // First history sequence number
+    let decoded = {};
+    decoded.historyStart = hCount;
+    let historyPosition = hCount;
+    while (pos < bytes.length) {
+        // First a byte with a history bit and a channel ID, record history item count
+        let itemHistoryPosition = null;
+        if (bytes[pos] & 0x80)
+            itemHistoryPosition = historyPosition--;
+        const reportName = getReportFromByte(bytes[pos++] & 0x7f);
+        const report     = STRIPS_REPORTS[reportName];
+        const size       = report.coding.getsize(bytes, pos);
+        const nextpos    = pos + size;
+        if (nextpos > bytes.length)
+            throw {message: 'Incomplete data'};
+        decoded[reportName] = decodeAndPackItem(report, bytes, pos, itemHistoryPosition);
+        pos = nextpos;
+    }
+    decoded.when = new Date().getTime();
+    return [decoded];
 }
 
 const decodeHistoryUplink = (bytes) => {
-    // @TODO
+    let pos = 0;
+    let reports = [];
+    let now = new Date().getTime();
+    if (bytes.length < 2)
+        throw { message: 'Too small history package'};
+
+    // First sequence number
+    let sequence = (bytes[pos++] << 8) | bytes[pos++];
+
+    while (pos < bytes.length - 5 /* 4 time offset, 1 channel */ ) {
+        let timeOffsetMS = 1000*((bytes[pos++]<<24) | (bytes[pos++]<<16) | (bytes[pos++]<<8) | bytes[pos++]);
+        const reportName = getReportFromByte(bytes[pos++] & 0x7f);
+        const report     = STRIPS_REPORTS[reportName];
+        const size       = report.coding.getsize(bytes, pos);
+        const nextpos    = pos + size;
+        if (nextpos > bytes.length)
+            throw {message: 'Incomplete data'};
+        let decoded      = {};
+        decoded.when     = now-timeOffsetMS;
+        decoded[report] = decodeAndPackItem(report, bytes, pos, sequence++);
+        reports.push(decoded);
+        pos = nextpos;
+    }
+    if (pos != bytes.length)
+        throw {message: 'Invalid history package size'};
+    return reports;
 }
 
 const STRIPS_UPLINK_PORTS = {
@@ -485,9 +513,10 @@ const test_modes = {
 // Test/example use code follows
 function test2(rl) {
     rl.question('Select mode (' + Object.keys(test_modes).map(k=>k + '=' + test_modes[k].name) + '): ', mode => {
-        if (!test_modes.hasOwnProperty(mode)) {
-            console.log('Unknown mode' + mode);
+        if (!test_modes[mode]) {
+            console.log('** Unknown mode: ' + mode);
             test2(rl);
+            return;
         }
         const func = test_modes[mode].func;
         const name = test_modes[mode].name;
@@ -498,7 +527,7 @@ function test2(rl) {
                     let data = Buffer.from(hex, "hex");
                     let decoded = func(port, data);
                     console.log(JSON.stringify(decoded));
-                } catch (err) { console.log(err.message); }
+                } catch (err) { console.log('** ' + err.message); }
                 test2(rl); // Ugly tail recursion, happens callback style
             })
         })
