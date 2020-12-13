@@ -118,7 +118,7 @@ const STRIPS_REPORTS = {
     CapacitancePadReport:   { reportbit: 20, sensors: STRIPS_SENSOR.CAP,                      coding: UNSIGN2, channel: 113, unit:''    },
     CapacitanceEndReport:   { reportbit: 21, sensors: STRIPS_SENSOR.CAP,                      coding: UNSIGN2, channel: 114, unit:''    },
     UserSwitch1Alarm:       { reportbit: 22, sensors: STRIPS_SENSOR.TAMPER,                   coding: DIGITAL, channel: 16,  unit:''    },
-    DoorCountReport:        { reportbit: 23, sensors: STRIPS_SENSOR.TAMPER,                   coding: UNSIGN2, channel: 17,  unit:''    },
+    DoorCountReport:        { reportbit: 23, sensors: STRIPS_SENSOR.DOOR,                     coding: UNSIGN2, channel: 17,  unit:''    },
     PresenceReport:         { reportbit: 24, sensors: STRIPS_SENSOR.PROX,                     coding: DIGITAL, channel: 18,  unit:''    },
     IRProximityReport:      { reportbit: 25, sensors: STRIPS_SENSOR.PROX,                     coding: UNSIGN2, channel: 19,  unit:''    },
     IRCloseProximityReport: { reportbit: 26, sensors: STRIPS_SENSOR.PROX,                     coding: UNSIGN2, channel: 20,  unit:''    },
