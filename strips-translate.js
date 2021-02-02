@@ -280,22 +280,24 @@ function encodeSetSetting(obj) {
     return res;
 }
 
+function getSettingById(id) {
+    let bFound = false;
+    for (var setting in STRIPS_SETTINGS) {
+        if (STRIPS_SETTINGS[setting].id == id) {
+            return setting;
+        }
+    }
+    return null;
+}
 
 function decodeGetSetting(bytes, pos) {
     let result = new Object();
-    while (pos < bytes.length) {
-        const id = bytes[pos++];
-        let bFound = false;
-        for (var setting in STRIPS_SETTINGS) {
-            if (STRIPS_SETTINGS[setting].id == id) {
-                result[setting] = {id:id, name: setting, unit:STRIPS_SETTINGS[setting].unit}
-                bFound = true;
-                break;
-            }
-        }
-        if (false == bFound)
-            throw {message: "Get settings: Unknown setting " + id};
-    }
+    const id = bytes[pos++];
+    const setting = getSettingById(id);
+    if (null == setting)
+        throw {message: "Get settings: Unknown setting " + id};
+
+    result[setting] = {id:id, name: setting, unit:STRIPS_SETTINGS[setting].unit}
     return result;
 }
 
@@ -455,9 +457,62 @@ const decodeHistoryUplink = (bytes) => {
     return reports;
 }
 
+const STATUS_CODES = [
+    'OK',                 // 0
+    'Bad setting',        // 1
+    'Bad payload length', // 2
+    'Value not accepted', // 3
+    'Unknown command'     // 4
+];
+
+const decodeSettingsUplink = (bytes) => {
+    let pos = 0;
+    let result = [];
+    let now = new Date().getTime();
+    if ( bytes.length < 1)
+        throw { message: 'To small settings package' };
+    
+    while (pos < bytes.length) {
+        let kind = bytes[pos++];
+        console.log("kind: " + kind);
+        if (2 == kind) {
+            // One or several requested setting values
+            if (pos+5 < bytes.length)
+                throw { message: 'Incomplete settings data' };
+            
+            const id = bytes[pos++];
+            const setting = getSettingById(id);
+            if (null == setting)
+                throw { message: 'Unknown setting id ' + id };
+            let decoded      = {};
+            decoded.when     = now;
+            decoded[setting] = { 
+                id: id, 
+                value: ((bytes[pos++]<<24) | (bytes[pos++]<<16) | (bytes[pos++]<<8) | bytes[pos++]),
+                unit: STRIPS_SETTINGS[setting].unit
+            };
+            result.push(decoded);
+        }
+        else if (3 == kind) {
+            // a single status code from the device when applying settings
+            if (pos + 1 != bytes.length)
+                throw { message: 'Bad status code message length'}
+            const status = bytes[pos++];
+            if (status >= STATUS_CODES.length)
+                throw { message: 'Unknown status code: ' + status };
+            decoded = {};
+            decoded['statusCode'] = { value: status, status: STATUS_CODES[status]};
+            result.push(decoded);
+        } else 
+            throw { message: 'Unknown settings uplink format: ' + kind }
+    }
+    return result;
+}
+
 const STRIPS_UPLINK_PORTS = {
-    DIRECT_PORT:  { port: 1, decode: decodeDirectUplink  },
-    HISTORY_PORT: { port: 2, decode: decodeHistoryUplink },
+    DIRECT_PORT:   { port: 1,  decode: decodeDirectUplink  },
+    HISTORY_PORT:  { port: 2,  decode: decodeHistoryUplink },
+    SETTINGS_PORT: { port: 11, decode: decodeSettingsUplink  },
 }
 
 // Attempt at decoding an uplink (reference is in raw-translate.js)
@@ -546,6 +601,5 @@ function commandLineTest() {
 // These functions are exported from this
 exports.encodeLoraStripsDownlink = decodeLoraStripsDownlink;
 exports.decodeLoraStripsUplink   = decodeLoraStripsUplink;
-exports.decodeLoraStripsUplink   = decodeLoraStripsUplink; 
 exports.commandLine              = commandLineTest;
 exports.rawTranslate             = rawTranslate;
