@@ -474,7 +474,6 @@ const decodeSettingsUplink = (bytes) => {
     
     while (pos < bytes.length) {
         let kind = bytes[pos++];
-        console.log("kind: " + kind);
         if (2 == kind) {
             // One or several requested setting values
             if (pos+5 < bytes.length)
@@ -579,7 +578,8 @@ function test2(rl) {
             port = Number(port);
             rl.question('Enter ' + name +' (hex format): ', (hex) => { 
                 try {
-                    let data = Buffer.from(hex, "hex");
+                    let trimmed = hex.replace(/\s/g, "");
+                    let data = Buffer.from(trimmed, "hex");
                     let decoded = func(port, data);
                     console.log(JSON.stringify(decoded));
                 } catch (err) { console.log('** ' + err.message); }
