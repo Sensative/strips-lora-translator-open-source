@@ -1,3 +1,4 @@
 cert/*
 strips-lora-translate-open-source.code-workspace
 apikeys/*
+.DS_Store
