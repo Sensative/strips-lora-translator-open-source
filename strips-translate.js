@@ -71,12 +71,12 @@ const GIT_IDD = {
 }
 const TEMPHUM = {
     getsize : (bytes, pos) => UNS1FP2.getsize(bytes, pos) + SI2FP10.getsize(bytes, pos+1),
-    decode  : (bytes, pos) => { return { humidity: { value: UNS1FP2(bytes, pos), unit:'%'}, temp: {value: SI2FP10(bytes, pos+1), unit: 'C'}} ; }
+    decode  : (bytes, pos) => { return { humidity: { value: UNS1FP2.decode(bytes, pos), unit:'%'}, temp: {value: SI2FP10.decode(bytes, pos+1), unit: 'C'}} ; }
 }
 
 const TEMPDOR = {
     getsize : (bytes, pos) => 3,
-    decode  : (bytes, pos) => { return { door: {value: DIGITAL.decode(bytes, pos), unit: 'bool'}, temp: { value: SI2FP10(bytes, pos+1), unit: 'C'}}; }
+    decode  : (bytes, pos) => { return { door: {value: DIGITAL.decode(bytes, pos), unit: 'bool'}, temp: { value: SI2FP10.decode(bytes, pos+1), unit: 'C'}}; }
 }
 
 // Logical sensors connected to each report, may be used to define products in terms of what sensors are available
