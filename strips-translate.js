@@ -582,7 +582,7 @@ function test2(rl) {
                     let data = Buffer.from(trimmed, "hex");
                     let decoded = func(port, data);
                     console.log(JSON.stringify(decoded));
-                } catch (err) { console.log('** ' + err.message); }
+                } catch (err) { console.log(err); }
                 test2(rl); // Ugly tail recursion, happens callback style
             })
         })
@@ -590,7 +590,10 @@ function test2(rl) {
 }
 
 function commandLineTest() {
-    const readline = require("readline");
+    let readline = null;
+    try {
+        readline = require("readline");
+    } catch (e) { console.log(e) };
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
