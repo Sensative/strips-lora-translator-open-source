@@ -1,4 +1,3 @@
-
 1. INTRODUCTION
 This is a small open source project serving the purpose of interacting with Sensative AB 
 Strips Lora sensor products. It examplifies using a secure REST API (using node.js) for translating 
@@ -8,6 +7,12 @@ your infrastructure. Additionally the code includes metadata for composing downl
 translating them.
 
 See LICENSE.txt for license and copyright information (MIT open source license).
+
+The code comes in the following files:
+  - raw-translate.js : Legacy version of the Strips translator. Reference design.
+  - strips-translate.js : Data-driven version which also can decode downlinks.
+  - cli.sh Command line tool to run either of the above, using the inclusion mechanism described below
+  - serve.sh : Described in example below
 
 2. SYSTEM REQUIREMENTS:
 It is assumed you have node.js installed, and that you are using bash shell. 
