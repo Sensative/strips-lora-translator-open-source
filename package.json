@@ -6,5 +6,5 @@
   "repository": "git@gitlab.com:sensative/strips-lora-translator-open-source.git",
   "author": "Lars Mats <lars.mats@sensative.com>",
   "license": "MIT",
-  "private": true
+  "homepage": "www.sensative.com"
 }
