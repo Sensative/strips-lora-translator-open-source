@@ -424,7 +424,6 @@ const decodeDirectUplink = (bytes) => {
         decoded[reportName] = decodeAndPackItem(report, bytes, pos, itemHistoryPosition);
         pos = nextpos;
     }
-    decoded.when = new Date().getTime();
     return [decoded];
 }
 
@@ -446,8 +445,8 @@ const decodeHistoryUplink = (bytes) => {
         const nextpos    = pos + size;
         if (nextpos > bytes.length)
             throw {message: 'Incomplete data'};
-        let decoded      = {};
-        decoded.when     = now-timeOffsetMS;
+        let decoded       = {};
+        decoded.timestamp = now-timeOffsetMS;
         decoded[report] = decodeAndPackItem(report, bytes, pos, sequence++);
         reports.push(decoded);
         pos = nextpos;
@@ -484,7 +483,6 @@ const decodeSettingsUplink = (bytes) => {
             if (null == setting)
                 throw { message: 'Unknown setting id ' + id };
             let decoded      = {};
-            decoded.when     = now;
             decoded[setting] = { 
                 id: id, 
                 value: ((bytes[pos++]<<24) | (bytes[pos++]<<16) | (bytes[pos++]<<8) | bytes[pos++]),
