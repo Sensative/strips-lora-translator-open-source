@@ -66,8 +66,8 @@ const GIT_IDD = {
     getsize : (bytes, pos) => 8,
     decode  : (bytes, pos) => { 
         return {
-            git: d2h((bytes[pos++] << 24) + (bytes[pos++] << 16) + (bytes[pos++] << 8) + bytes[pos++], 4),
-            idd: d2h((bytes[pos++] << 24) + (bytes[pos++] << 16) + (bytes[pos++] << 8) + bytes[pos++], 4) }; }
+            version: d2h((bytes[pos++] << 24) + (bytes[pos++] << 16) + (bytes[pos++] << 8) + bytes[pos++], 4),
+            idddata: d2h((bytes[pos++] << 24) + (bytes[pos++] << 16) + (bytes[pos++] << 8) + bytes[pos++], 4) }; }
 }
 const TEMPHUM = {
     getsize : (bytes, pos) => UNS1FP2.getsize(bytes, pos) + SI2FP10.getsize(bytes, pos+1),
