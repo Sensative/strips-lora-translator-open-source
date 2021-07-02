@@ -20,6 +20,9 @@ Using it as npm/yarn package is also possible, see installation below.
 It has been developed only on Mac OSX with node 13.8.0.
 
 3. INSTALLATION:
+
+Several possibilities exist:
+
 For running as microservice, as is with example code as with serve.sh
 1. Clone this repository
 2. Obtain a certificate and key and put in in a cert folder within the repository
@@ -30,12 +33,17 @@ as environment parameter.
 
 Include this in your application by adding this dependency
 
- yarn add git+https://git@gitlab.com/sensative/strips-lora-translator-open-source#master
+ yarn add strips-lora-translator-open-source
 
-Then in your javascript file (example for command line use):
+  Then in your javascript file (example for command line use):
 
     const translator = require('strips-lora-translator-open-source');
     translator.commandLine(); // Example, you can also review this file to see how to directly access its functions.
+
+  Or for inclusion in a web application
+
+    import {decodeLoraStripsUplink, decodeLoraStripsDownlink} from 'strips-lora-translator-open-source/strips-translate';
+    
 
 4. EXAMPLE MICROSERVICE USAGE:
 
