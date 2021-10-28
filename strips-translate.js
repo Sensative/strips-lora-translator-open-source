@@ -34,6 +34,12 @@ const encodeU32 = (value) => {
 }
 
 // Uplink data decoders
+
+const EMPTY = {
+    getsize: (bytes, pos) => 0,
+    decode: (bytes, pos) => 0,
+}
+
 const UNSIGN1 = {
     getsize : (bytes, pos) => 1,
     decode  : (bytes, pos) => bytes[pos],
@@ -94,8 +100,10 @@ const STRIPS_SENSOR = {
 }
 
 // All report types including what is required for decode and what sensors are required for each
+
 const STRIPS_REPORTS = {
     CheckInConfirmed:       { reportbit:  0, sensors: STRIPS_SENSOR.BUTTON,                   coding: GIT_IDD, channel: 110, unit:''    },
+    EmptyReport:            { reportbit: -1, sensors: STRIPS_SENSOR.BUTTON,                   coding: EMPTY,   channel: 0,   unit:''    },
     BatteryReport:          { reportbit:  1, sensors: STRIPS_SENSOR.BATTERY,                  coding: UNSIGN1, channel: 1,   unit:'%'   },
     TempReport:             { reportbit:  2, sensors: STRIPS_SENSOR.TEMP,                     coding: SI2FP10, channel: 2,   unit:'C'   },
     TempAlarm:              { reportbit:  3, sensors: STRIPS_SENSOR.TEMP,                     coding: TMPALRM, channel: 3,   unit:''    },
