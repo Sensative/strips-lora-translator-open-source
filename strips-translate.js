@@ -602,5 +602,6 @@ function commandLineTest() {
 // These functions are exported from this
 exports.decodeLoraStripsDownlink = decodeLoraStripsDownlink;
 exports.decodeLoraStripsUplink   = decodeLoraStripsUplink;
+exports.encodeLoraStripsDownlink = encodeLoraStripsDownlink;
 exports.commandLine              = commandLineTest;
 exports.rawTranslate             = rawTranslate;
