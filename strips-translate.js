@@ -240,6 +240,8 @@ const STRIPS_SETTINGS = {
     PRESENCE_TRESHOLD                 : { id: 0x30, unit: 'reflection',  decode: decodeU32dec,  encode: encodeU32,     name:'Presence treshold'  },
     PRESENCE_TIMEOUT                  : { id: 0x31, unit: 's',           decode: decodeU32dec,  encode: encodeU32,     name:'Presence timeout'  },
     SENSOR_CONFIGURATION              : { id: 0x32, unit: 'config',      decode: decodeConfig,  encode: encodeConfig,  name:'Sensor configuration'},
+    FACTORY_TEMPERATURE_CALIBRATION   : { id: 0x33, unit: 'mC',          decode: decodeU32dec,  encode: encodeU32,     name:'Factory Internal Temp Calibration'},
+    USER_TEMPERATURE_CALIBRATION      : { id: 0x34, unit: 'mC',          decode: decodeU32dec,  encode: encodeU32,     name:'User Temp Calibration'},
 }
 
 const STRIPS_PROFILES = {
