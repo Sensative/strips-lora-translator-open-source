@@ -125,7 +125,7 @@ const rawTranslate = (bytes, port) => {
         target.door = {};
         target.door.value = !!bytes[pos++]; // true = door open, false = door closed
         target.temperature = {};
-        target.temperature = ((bytes[pos] & 0x80 ? 0xFFFF<<16 : 0) | (bytes[pos++] << 8) | bytes[pos++]) / 10;
+        target.temperature.value = ((bytes[pos] & 0x80 ? 0xFFFF<<16 : 0) | (bytes[pos++] << 8) | bytes[pos++]) / 10;
         break;
       case 112: // Capacitance Raw Sensor Value 2bytes 0-65535
         target.capacitanceFlood = {};
