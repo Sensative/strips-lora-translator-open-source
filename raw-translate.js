@@ -73,9 +73,11 @@ const rawTranslate = (bytes, port) => {
         target.floodAlarm = {};
         target.floodAlarm.value = !!bytes[pos++]; // boolean, after >x<
         break;
-      case 15: // FoilAlarm 1bytes binary
-        target.foilAlarm = {};
-        target.foilAlarm.value = !!bytes[pos++]; // should never trigger anymore
+      case 15: // oilAlarm 1bytes analog
+        target.oilAlarm = {};
+        target.oilAlarm.value = bytes[pos++];
+        target.foilAlarm = {}; // Compatibility with older strips
+        target.foilAlarm.value = !!bytes[pos++];
         break;
     case 16: // UserSwitch1Alarm, 1 byte digital
         target.userSwitch1Alarm = {};

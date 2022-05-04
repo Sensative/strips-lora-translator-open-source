@@ -118,7 +118,7 @@ const STRIPS_REPORTS = {
     TamperAlarm:            { reportbit: 12, sensors: STRIPS_SENSOR.TAMPER,                   coding: DIGITAL, channel: 12,  unit:''    },
     FloodReport:            { reportbit: 13, sensors: STRIPS_SENSOR.CAP,                      coding: UNSIGN1, channel: 13,  unit:''    },
     FloodAlarm:             { reportbit: 14, sensors: STRIPS_SENSOR.CAP,                      coding: DIGITAL, channel: 14,  unit:''    },
-    FoilAlarm:              { reportbit: 15, sensors: STRIPS_SENSOR.CAP,                      coding: DIGITAL, channel: 15,  unit:''    },
+    OilAlarm:               { reportbit: 15, sensors: STRIPS_SENSOR.CAP,                      coding: UNSIGN1, channel: 15,  unit:''    },
     TempHumReport:          { reportbit: 16, sensors: STRIPS_SENSOR.TEMP|STRIPS_SENSOR.HUMID, coding: TEMPHUM, channel: 80,  unit:''    },
     AvgTempHumReport:       { reportbit: 17, sensors: STRIPS_SENSOR.TEMP|STRIPS_SENSOR.HUMID, coding: TEMPHUM, channel: 81,  unit:''    },
     TempDoorReport:         { reportbit: 18, sensors: STRIPS_SENSOR.TEMP|STRIPS_SENSOR.DOOR,  coding: TEMPDOR, channel: 82,  unit:''    },
