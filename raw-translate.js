@@ -113,7 +113,7 @@ const rawTranslate = (bytes, port) => {
         target.humidity = {};
         target.humidity.value = bytes[pos++] / 2;
         target.temperature = {};
-        target.temperature = ((bytes[pos] & 0x80 ? 0xFFFF<<16 : 0) | (bytes[pos++] << 8) | bytes[pos++]) / 10;
+        target.temperature.value = ((bytes[pos] & 0x80 ? 0xFFFF<<16 : 0) | (bytes[pos++] << 8) | bytes[pos++]) / 10;
         break;
       case 81:
         target.humidity = {};
