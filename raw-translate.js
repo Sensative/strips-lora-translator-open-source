@@ -51,11 +51,11 @@ const rawTranslate = (bytes, port) => {
         break;
       case 9: // DoorSwitch 1bytes binary
         target.door = {};
-        target.door.value = !!bytes[pos++]; // true = door open, false = door closed
+        target.door.value = !!bytes[pos++]; // true = door closed, false = door open
         break;
       case 10: // DoorAlarm 1bytes binary
         target.doorAlarm = {};
-        target.doorAlarm.value = !!bytes[pos++]; // boolean true = alarm
+        target.doorAlarm.value = !!bytes[pos++]; // boolean true = alarm (door is open)
         break;
       case 11: // TamperReport 1bytes binary
         target.tamperReport = {};
@@ -125,7 +125,7 @@ const rawTranslate = (bytes, port) => {
         break;
       case 82:
         target.door = {};
-        target.door.value = !!bytes[pos++]; // true = door open, false = door closed
+        target.door.value = !!bytes[pos++]; // true = door closed, false = door open
         target.temperature = {};
         target.temperature.value = ((bytes[pos] & 0x80 ? 0xFFFF<<16 : 0) | (bytes[pos++] << 8) | bytes[pos++]) / 10;
         break;
