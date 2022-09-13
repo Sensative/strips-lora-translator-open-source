@@ -79,9 +79,9 @@ const rawTranslate = (bytes, port) => {
         target.foilAlarm = {}; // Compatibility with older strips
         target.foilAlarm.value = !!bytes[pos++];
         break;
-    case 16: // UserSwitch1Alarm, 1 byte digital
-        target.userSwitch1Alarm = {};
-        target.userSwitch1Alarm.value = !!bytes[pos++];
+    case 16: // UserSwitchAlarm, 1 byte digital
+        target.userSwitchAlarm = {};
+        target.userSwitchAlarm.value = !!bytes[pos++];
         break;
     case 17: // DoorCountReport, 2 byte analog
         target.doorCount = {};
