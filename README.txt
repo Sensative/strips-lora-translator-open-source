@@ -8,6 +8,9 @@ translating them.
 
 See LICENSE.txt for license and copyright information (MIT open source license).
 
+For TTN users we recommend using the https://gitlab.com/sensative/strips-lora-translator-ttn/-/blob/main/strips-ttn-decoder.js 
+TTN decoder, which is a simplified version of this project adapted to TTN.
+
 The code comes in the following files:
   - raw-translate.js : Legacy version of the Strips translator. Reference design.
   - strips-translate.js : Data-driven version which also can decode downlinks.
