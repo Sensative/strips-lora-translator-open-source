@@ -223,9 +223,9 @@ const STRIPS_SETTINGS = {
     CAPACITANCE_FLOOD_REPORT_INTERVAL : { id: 0x1F, unit: 's',           decode: decodeU32dec,  encode: encodeU32,     name:'Cap flood report interval'  },
     CAPACITANCE_PAD_REPORT_INTERVAL   : { id: 0x20, unit: 's',           decode: decodeU32dec,  encode: encodeU32,     name:'Cap pad report interval'  },
     CAPACITANCE_END_REPORT_INTERVAL   : { id: 0x21, unit: 's',           decode: decodeU32dec,  encode: encodeU32,     name:'Cap end report interval'  },
-    SENSORS_COMBINED_1                : { id: 0x22, unit: 'reports',     decode: decodeReports, encode: encodeReports, name:'Combined sensors 1'  },
-    SENSORS_COMBINED_2                : { id: 0x23, unit: 'reports',     decode: decodeReports, encode: encodeReports, name:'Combined sensors 2' },
-    SENSORS_COMBINED_3                : { id: 0x24, unit: 'reports',     decode: decodeReports, encode: encodeReports, name:'Combined sensors 3' },
+    SENSORS_COMBINED_1                : { id: 0x22, unit: 'reports',     decode: decodeReports, encode: encodeReports, name:'Combined reports 1'  },
+    SENSORS_COMBINED_2                : { id: 0x23, unit: 'reports',     decode: decodeReports, encode: encodeReports, name:'Combined reports 2' },
+    SENSORS_COMBINED_3                : { id: 0x24, unit: 'reports',     decode: decodeReports, encode: encodeReports, name:'Combined reports 3' },
     HISTORY_REPORTS                   : { id: 0x25, unit: 'reports',     decode: decodeReports, encode: encodeReports, name:'History reports' },
     DEMO_TRYJOIN_INTERVAL             : { id: 0x26, unit: 'min',         decode: decodeU32dec,  encode: encodeU32,     name:'Try join interval'  },
     LUX_PLASTIC_COMP                  : { id: 0x27, unit: '%',           decode: decodeU32dec,  encode: encodeU32,     name:'Lux plastic comp'  },
@@ -242,6 +242,12 @@ const STRIPS_SETTINGS = {
     SENSOR_CONFIGURATION              : { id: 0x32, unit: 'config',      decode: decodeConfig,  encode: encodeConfig,  name:'Sensor configuration'},
     FACTORY_TEMPERATURE_CALIBRATION   : { id: 0x33, unit: 'mC',          decode: decodeU32dec,  encode: encodeU32,     name:'Factory Internal Temp Calibration'},
     USER_TEMPERATURE_CALIBRATION      : { id: 0x34, unit: 'mC',          decode: decodeU32dec,  encode: encodeU32,     name:'User Temp Calibration'},
+    LUX_FILTERFACTOR                  : { id: 0x35, unit: 'count',       decode: decodeU32dec,  encode: encodeU32,     name:'Lux Filter Factor'},
+    LUX_VERIFICATION_POLL_INTERVAL    : { id: 0x36, unit: 's',           decode: decodeU32dec,  encode: encodeU32,     name:'Lux Verification Poll Interval'},
+    OIL_FILTERFACTOR                  : { id: 0x37, unit: 'count',       decode: decodeU32dec,  encode: encodeU32,     name:'Oil Filter Factor'},
+    OIL_HYSTERESIS                    : { id: 0x38, unit: 'capacitance', decode: decodeU32dec,  encode: encodeU32,     name:'Oil Hysteresis'},
+    CONFIRMED_REPORTS_MASK            : { id: 0x39, unit: 'reports',     decode: decodeReports, encode: encodeReports, name:'Confirmed reports'},
+    IR_PROXIMITY_COUNT                : { id: 0x3a, unit: 'count',       decode: decodeU32dec,  encode: encodeU32,     name:'Close Proximity Confirm Count'},
 }
 
 const STRIPS_PROFILES = {
