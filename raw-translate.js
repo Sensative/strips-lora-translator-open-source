@@ -75,7 +75,7 @@ const rawTranslate = (bytes, port) => {
         break;
       case 15: // oilAlarm 1bytes analog
         target.oilAlarm = {};
-        target.oilAlarm.value = bytes[pos++];
+        target.oilAlarm.value = bytes[pos];
         target.foilAlarm = {}; // Compatibility with older strips
         target.foilAlarm.value = !!bytes[pos++];
         break;
