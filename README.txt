@@ -4,12 +4,17 @@ Strips Lora sensor products. It examplifies using a secure REST API (using node.
 data from the Sensative LoRa Strips (www.sensative.com). It can serve as reference for custom
 translation work, or it can be used off-the-shelf as a microservice serving translations in 
 your infrastructure. Additionally the code includes metadata for composing downlinks or 
-translating them.
+translating them. This project is basis of a few other project adaptations.
+
+* For TTN users we recommend https://gitlab.com/sensative/strips-lora-translator-ttn/
+decoder, which is a simplified version of this project adapted to TTN.
+
+* For Chirpstack users we recommend https://gitlab.com/sensative/strips-lora-translator-chirpstack
+decoder, which is a simplified version of this project adapted to Chirpstack.
 
 See LICENSE.txt for license and copyright information (MIT open source license).
 
-For TTN users we recommend https://gitlab.com/sensative/strips-lora-translator-ttn/ 
-TTN decoder, which is a simplified version of this project adapted to TTN.
+
 
 The code comes in the following files:
   - raw-translate.js : Legacy version of the Strips translator. Reference design.
